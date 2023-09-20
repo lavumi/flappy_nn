@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use rand::rngs::ThreadRng;
 use specs::{ Join, World, WorldExt};
 use winit::event::{ElementState, VirtualKeyCode};
-use crate::builder::{background, obstacle};
+use crate::builder::{background, pipe, player};
 
 use crate::components::*;
 use crate::renderer::InstanceTileRaw;
@@ -32,6 +32,7 @@ impl GameState {
         self.world.register::<Collider>();
         self.world.register::<Tile>();
         self.world.register::<BgScroll>();
+        self.world.register::<Player>();
         self.world.register::<PipeScroll>();
 
         self.world.insert(Camera::init_orthographic(5, 9));
@@ -43,8 +44,9 @@ impl GameState {
 
         background(&mut self.world);
 
-        obstacle(&mut self.world, 16.);
-        obstacle(&mut self.world, 8.);
+        pipe(&mut self.world, 16.);
+        pipe(&mut self.world, 8.);
+        player(&mut self.world);
     }
 
 

@@ -1,5 +1,6 @@
 use specs::{Builder, World, WorldExt};
 use crate::components::*;
+use crate::game_configs::HOLE_SIZE;
 
 pub fn background(world : &mut World){
     world.create_entity()
@@ -46,10 +47,7 @@ pub fn background(world : &mut World){
     }
 }
 
-
-pub fn obstacle(world : &mut World, pos : f32  ){
-    let hole_size = 2.0;
-
+pub fn pipe(world : &mut World, pos : f32  ){
     let rand = 5.0;
     world.create_entity()
             .with( Tile {
@@ -86,7 +84,7 @@ pub fn obstacle(world : &mut World, pos : f32  ){
                 atlas: "tile".to_string(),
             })
             .with( Transform{
-                position: [pos, rand + hole_size -4.0, 0.2],
+                position: [pos, rand + HOLE_SIZE -4.0, 0.2],
                 size: [2.0, 2.],
             })
             .with(PipeScroll {
@@ -100,12 +98,26 @@ pub fn obstacle(world : &mut World, pos : f32  ){
                 atlas: "tile".to_string(),
             })
             .with( Transform{
-                position: [pos, (rand + hole_size -4.0)  * 0.5 + 5.5, 0.2],
-                size: [2.0, 13.0 - (rand + hole_size ) ],
+                position: [pos, (rand + HOLE_SIZE -4.0)  * 0.5 + 5.5, 0.2],
+                size: [2.0, 13.0 - (rand + HOLE_SIZE ) ],
             })
             .with(PipeScroll {
                 reposition_size : 16.0,
                 pipe_index:3
             })
+            .build();
+}
+
+pub fn player(world : &mut World){
+    world.create_entity()
+            .with(Tile {
+                uv: [0.0,0.25,0.0,1.0],
+                atlas: "player".to_string(),
+            })
+            .with(Transform{
+                position: [0.,0.,0.3],
+                size: [1.,1.],
+            })
+            .with(Player::default())
             .build();
 }

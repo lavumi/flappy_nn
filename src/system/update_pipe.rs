@@ -4,10 +4,11 @@ use crate::components::{BgScroll, PipeScroll, Transform};
 use crate::resources::{DeltaTime, GameStage, Stage};
 use rand::Rng;
 use rand::rngs::ThreadRng;
+use crate::game_configs::HOLE_SIZE;
 
 pub struct UpdatePipe;
 
-const HOLE_SIZE: f32 = 2.0;
+
 
 impl<'a> System<'a> for UpdatePipe {
     type SystemData = (

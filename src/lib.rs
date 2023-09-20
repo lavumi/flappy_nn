@@ -13,6 +13,7 @@ mod system;
 mod game_state;
 mod object;
 mod builder;
+mod game_configs;
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
 pub async fn start(){

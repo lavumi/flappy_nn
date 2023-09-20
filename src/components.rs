@@ -60,3 +60,9 @@ pub struct PipeScroll {
     pub reposition_size : f32,
     pub pipe_index : u8,
 }
+
+#[derive(Component, Clone, Default)]
+pub struct Player {
+    pub force: f32,
+    pub jump : bool
+}

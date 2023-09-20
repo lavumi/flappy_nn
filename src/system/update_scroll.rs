@@ -2,8 +2,6 @@ use specs::{Join, Read, ReadStorage, System, Write, WriteStorage};
 
 use crate::components::{BgScroll, Transform};
 use crate::resources::{DeltaTime, GameStage, Stage};
-use rand::Rng;
-use rand::rngs::ThreadRng;
 
 pub struct UpdateScroll;
 

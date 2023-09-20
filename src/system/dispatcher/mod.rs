@@ -22,7 +22,8 @@ pub trait UnifiedDispatcher {
 construct_dispatcher!(
     (UpdateCamera, "update_camera", &[]),
     (UpdateScroll, "update_scroll", &[]),
-    (UpdatePipe, "update_pipe", &[])
+    (UpdatePipe, "update_pipe", &[]),
+    (UpdatePlayer, "update_player", &[])
 );
 
 pub fn new() -> Box<dyn UnifiedDispatcher + 'static> {
