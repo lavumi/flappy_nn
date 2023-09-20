@@ -44,4 +44,5 @@ impl Transform {
     }
 }
 
-
+#[derive(Component, Clone)]
+pub struct Scroll {}

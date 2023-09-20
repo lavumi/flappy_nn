@@ -9,7 +9,7 @@ impl<'a> System<'a> for UpdateCamera {
         Write<'a, Camera>,
     );
 
-    fn run(&mut self, data: Self::SystemData) {
+    fn run(&mut self, _: Self::SystemData) {
         // let ( mut camera) = data;
         // let player_pos = [pos.0, pos.1];
         // camera.move_camera(player_pos);

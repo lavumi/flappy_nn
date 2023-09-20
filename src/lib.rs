@@ -12,12 +12,13 @@ mod resources;
 mod system;
 mod game_state;
 mod object;
+mod builder;
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
 pub async fn start(){
     let title = "wgpu_wasm";
-    let width = 1600;
-    let height = 900;
+    let width = 576;
+    let height = 1024;
 
     cfg_if::cfg_if! {
         if #[cfg(target_arch = "wasm32")] {

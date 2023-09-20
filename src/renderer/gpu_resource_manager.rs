@@ -6,7 +6,7 @@ use cgmath::SquareMatrix;
 use wgpu::{BindGroup, BindGroupLayout, Buffer, Device, Queue, RenderPass};
 use wgpu::util::DeviceExt;
 
-use crate::object::make_tile_mesh;
+use crate::object::{make_tile_mesh};
 use crate::renderer::mesh::{InstanceTileRaw, Mesh};
 use crate::renderer::Texture;
 
@@ -44,9 +44,9 @@ impl GPUResourceManager {
     }
 
     pub fn init_meshes(&mut self, device: &Device) {
-        self.add_mesh("tile", make_tile_mesh(device, "base_tile".to_string()));
-        self.add_mesh("bg", make_tile_mesh(device, "base_tile".to_string()));
-        self.add_mesh("player", make_tile_mesh(device, "base_tile".to_string()));
+        self.add_mesh("tile", make_tile_mesh(device, "tile".to_string()));
+        self.add_mesh("bg", make_tile_mesh(device, "bg".to_string()));
+        self.add_mesh("player", make_tile_mesh(device, "player".to_string()));
     }
 
     fn init_base_layouts(&mut self, device: &Device) {
@@ -279,6 +279,7 @@ impl GPUResourceManager {
         self.set_bind_group(render_pass, "camera");
         self.render_meshes(render_pass, "bg");
         self.render_meshes(render_pass, "tile");
+
         self.render_meshes(render_pass, "player");
 
         // self.render_meshes(render_pass, "character");

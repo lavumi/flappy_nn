@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use rand::rngs::ThreadRng;
-use specs::{Join, World, WorldExt};
+use specs::{ Join, World, WorldExt};
+use crate::builder::background;
 
 use crate::components::*;
 use crate::renderer::InstanceTileRaw;
@@ -29,10 +30,15 @@ impl GameState {
         self.world.register::<Transform>();
         self.world.register::<Collider>();
         self.world.register::<Tile>();
+        self.world.register::<Scroll>();
 
-        self.world.insert(Camera::init_orthographic(16, 12));
+        self.world.insert(Camera::init_orthographic(5, 9));
         self.world.insert(DeltaTime(0.05));
         self.world.insert(ThreadRng::default());
+        self.world.insert(InputHandler::default());
+        
+
+        background(&mut self.world);
 
     }
 
@@ -63,8 +69,6 @@ impl GameState {
         let rt_data = (&tiles, &transforms).join().collect::<Vec<_>>();
 
         let mut tile_instance_data_hashmap = HashMap::new();
-
-
         for (tile, transform) in rt_data {
             let atlas = tile.atlas.clone();
             let instance = InstanceTileRaw {

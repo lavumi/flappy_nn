@@ -3,7 +3,6 @@ use std::iter;
 
 use winit::window::Window;
 
-use crate::components::Transform;
 use crate::renderer::gpu_resource_manager::GPUResourceManager;
 use crate::renderer::mesh::InstanceTileRaw;
 use crate::renderer::pipeline_manager::PipelineManager;
@@ -155,13 +154,8 @@ impl RenderState {
     }
 
 
-    pub fn update_map_instance(&mut self, tile_instance: Vec<InstanceTileRaw>) {
-        self.gpu_resource_manager.update_mesh_instance("world", &self.device, &self.queue, tile_instance);
-    }
 
-    // fn update_mesh_instance<T: Into<String>>(&mut self, name: T, tile_instance: Vec<InstanceTileRaw>) {
-    //     self.gpu_resource_manager.update_mesh_instance(name, &self.device, &self.queue, tile_instance);
-    // }
+
 
     pub fn update_mesh_instance_bulk(&mut self, tile_instance_data_hashmap: HashMap<String, Vec<InstanceTileRaw>>) {
         for pair in tile_instance_data_hashmap {
