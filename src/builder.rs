@@ -12,7 +12,7 @@ pub fn background(world : &mut World){
                 position: [0., 1., 0.2],
                 size: [16.0, 16.0],
             })
-            .with(BgScroll {
+            .with(Background {
                 reposition_size : 32.0,
             })
             .build();
@@ -25,7 +25,7 @@ pub fn background(world : &mut World){
                 position: [16., 1., 0.2],
                 size: [16.0, 16.0],
             })
-            .with(BgScroll {
+            .with(Background {
                 reposition_size : 32.0,
             })
             .build();
@@ -40,7 +40,7 @@ pub fn background(world : &mut World){
                     position: [pos, -8., 0.2],
                     size: [1.0, 2.0],
                 })
-                .with(BgScroll {
+                .with(Background {
                     reposition_size : 16.0,
                 })
                 .build();
@@ -58,7 +58,7 @@ pub fn pipe(world : &mut World, pos : f32  ){
                 position: [pos, rand - 6.0, 0.2],
                 size: [2.0, 2.],
             })
-            .with(PipeScroll {
+            .with(Pipe {
                 reposition_size : 16.0,
                 pipe_index:0
             })
@@ -72,7 +72,7 @@ pub fn pipe(world : &mut World, pos : f32  ){
                 position: [pos, rand * 0.5- 7.0, 0.2],
                 size: [2.0, rand],
             })
-            .with(PipeScroll {
+            .with(Pipe {
                 reposition_size : 16.0,
                 pipe_index:1
             })
@@ -87,7 +87,7 @@ pub fn pipe(world : &mut World, pos : f32  ){
                 position: [pos, rand + HOLE_SIZE -4.0, 0.2],
                 size: [2.0, 2.],
             })
-            .with(PipeScroll {
+            .with(Pipe {
                 reposition_size : 16.0,
                 pipe_index:2
             })
@@ -101,7 +101,7 @@ pub fn pipe(world : &mut World, pos : f32  ){
                 position: [pos, (rand + HOLE_SIZE -4.0)  * 0.5 + 5.5, 0.2],
                 size: [2.0, 13.0 - (rand + HOLE_SIZE ) ],
             })
-            .with(PipeScroll {
+            .with(Pipe {
                 reposition_size : 16.0,
                 pipe_index:3
             })

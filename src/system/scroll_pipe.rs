@@ -1,10 +1,10 @@
 use specs::{Join, Read, ReadStorage, System, Write, WriteStorage};
 
-use crate::components::{BgScroll, PipeScroll, Transform};
-use crate::resources::{DeltaTime, GameStage, Stage};
+use crate::components::{ Pipe, Transform};
+use crate::resources::{DeltaTime};
 use rand::Rng;
 use rand::rngs::ThreadRng;
-use crate::game_configs::HOLE_SIZE;
+use crate::game_configs::{GAME_SPEED, HOLE_SIZE};
 
 pub struct UpdatePipe;
 
@@ -12,20 +12,16 @@ pub struct UpdatePipe;
 
 impl<'a> System<'a> for UpdatePipe {
     type SystemData = (
-        ReadStorage<'a, PipeScroll>,
+        ReadStorage<'a, Pipe>,
         WriteStorage<'a, Transform>,
         Read<'a, DeltaTime>,
-        Write<'a, ThreadRng>,
-        Read<'a, GameStage>
+        Write<'a, ThreadRng>
     );
 
-    fn run(&mut self, (sc, mut tf, dt, mut rng, stage): Self::SystemData) {
-        if stage.0 != Stage::Run {
-            return;
-        }
+    fn run(&mut self, (sc, mut tf, dt, mut rng): Self::SystemData) {
         let mut rand = -1.0 as f32;
         for ( scroll, transform) in ( &sc, &mut tf).join() {
-            transform.position[0] -= dt.0;
+            transform.position[0] -= dt.0 * GAME_SPEED;
             if transform.position[0] + transform.size[0]  / 2.0 < -6.0 {
                 if rand < 0.0 {
                     rand = rng.gen_range(3.0..7.0);

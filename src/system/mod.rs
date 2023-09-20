@@ -1,17 +1,19 @@
 pub use dispatcher::UnifiedDispatcher;
 pub use update_camera::UpdateCamera;
-pub use update_physics::UpdatePhysics;
-pub use update_scroll::UpdateScroll;
-pub use update_pipe::UpdatePipe;
+pub use check_collision::CheckCollision;
+pub use scroll_background::ScrollBackground;
+pub use scroll_pipe::UpdatePipe;
 pub use update_player::UpdatePlayer;
+pub use check_game_stage::CheckGameStage;
 
 
 mod update_camera;
-mod update_physics;
+mod check_collision;
 mod dispatcher;
-mod update_scroll;
-mod update_pipe;
+mod scroll_background;
+mod scroll_pipe;
 mod update_player;
+mod check_game_stage;
 
 
 pub fn build() -> Box<dyn UnifiedDispatcher + 'static> {

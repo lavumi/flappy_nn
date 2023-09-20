@@ -10,16 +10,31 @@ use crate::resources::*;
 use crate::system;
 use crate::system::UnifiedDispatcher;
 
+
+#[allow(dead_code)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Copy)]
+pub enum Stage { Ready, Run, Pause, End }
+
+
+impl Default for Stage {
+    fn default() -> Self {
+        Stage::Ready
+    }
+}
+
+
 pub struct GameState {
     pub world: World,
     dispatcher: Box<dyn UnifiedDispatcher + 'static>,
+    stage : Stage
 }
 
 impl Default for GameState {
     fn default() -> Self {
         GameState {
             world: World::new(),
-            dispatcher: system::build()
+            dispatcher: system::build(),
+            stage : Stage::Ready
         }
     }
 }
@@ -31,40 +46,75 @@ impl GameState {
         self.world.register::<Transform>();
         self.world.register::<Collider>();
         self.world.register::<Tile>();
-        self.world.register::<BgScroll>();
+        self.world.register::<Background>();
         self.world.register::<Player>();
-        self.world.register::<PipeScroll>();
+        self.world.register::<Pipe>();
 
         self.world.insert(Camera::init_orthographic(5, 9));
         self.world.insert(DeltaTime(0.05));
-        self.world.insert(GameStage(Stage::Ready));
+        self.world.insert(GameFinished(false));
         self.world.insert(ThreadRng::default());
         self.world.insert(InputHandler::default());
-        
 
-        background(&mut self.world);
 
-        pipe(&mut self.world, 16.);
-        pipe(&mut self.world, 8.);
-        player(&mut self.world);
+        self.init_game();
+
     }
 
 
-    pub fn update(&mut self, dt: f32) {
-        {
-            let mut delta = self.world.write_resource::<DeltaTime>();
-            *delta = DeltaTime(dt * 5.0);
+
+    fn init_game(&mut self){
+
+        self.world.delete_all();
+        background(&mut self.world);
+        pipe(&mut self.world, 16.);
+        pipe(&mut self.world, 8.);
+        player(&mut self.world);
+
+        let mut finished = self.world.write_resource::<GameFinished>();
+        *finished = GameFinished(false);
+
+        let mut inputs = self.world.write_resource::<InputHandler>();
+        *inputs = InputHandler::default();
+
+        self.stage = Stage::Ready;
+    }
+
+    fn check_game_finished(&mut self ) {
+        let finished = self.world.read_resource::<GameFinished>();
+        if finished.0 == true {
+            self.stage = Stage::End;
         }
+    }
+
+    fn update_delta_time(&mut self, dt : f32 ){
+        let mut delta = self.world.write_resource::<DeltaTime>();
+        *delta = DeltaTime(dt);
+    }
+
+    pub fn update(&mut self, dt: f32) {
+        self.check_game_finished();
+        if self.stage != Stage::Run {
+            return;
+        }
+
+        self.update_delta_time(dt);
         self.dispatcher.run_now(&mut self.world);
         self.world.maintain();
     }
 
     pub fn handle_keyboard_input(&mut self, input: &winit::event::KeyboardInput) -> bool {
-        let mut game_stage = self.world.write_resource::<GameStage>();
-        match game_stage.0 {
-            Stage::Ready | Stage::End | Stage::Pause => {
+        // let game_stage = self.world.write_resource::<GameFinished>();
+        match self.stage {
+            Stage::End => {
                 if input.virtual_keycode.is_none() == false &&  input.state == ElementState::Released {
-                    *game_stage = GameStage(Stage::Run);
+                    self.init_game();
+                }
+                return true;
+            }
+            Stage::Ready | Stage::Pause => {
+                if input.virtual_keycode.is_none() == false &&  input.state == ElementState::Released {
+                   self.stage = Stage::Run;
                 }
                 return true;
             }
@@ -72,7 +122,7 @@ impl GameState {
                 match input.virtual_keycode {
                     Some(code) if code == VirtualKeyCode::P => {
                         if input.state == ElementState::Released {
-                            *game_stage = GameStage(Stage::Pause);
+                            self.stage = Stage::Pause;
                         }
                         return true;
                     }

@@ -1,14 +1,14 @@
 use winit::event::{ElementState, VirtualKeyCode};
 
 pub struct InputHandler{
-    pub attack1: bool,
+    pub jump: bool,
 }
 
 
 impl Default for InputHandler {
     fn default() -> Self {
         InputHandler {
-            attack1: false
+            jump: false
         }
     }
 }
@@ -20,10 +20,10 @@ impl InputHandler {
             VirtualKeyCode::Space => {
                 match state {
                     ElementState::Pressed => {
-                        self.attack1 = true;
+                        self.jump = true;
                     }
                     ElementState::Released => {
-                        self.attack1 = false;
+                        self.jump = false;
                     }
                 }
                 true
