@@ -11,5 +11,5 @@ impl<'a> System<'a> for UpdatePhysics {
         WriteStorage<'a, Transform>
     );
 
-    fn run(&mut self, (entities, mut col, mut tf): Self::SystemData) {}
+    fn run(&mut self, (_, _,  _): Self::SystemData) {}
 }

@@ -1,9 +1,15 @@
 use specs::*;
 use specs_derive::Component;
 
+
+
+
+
 #[allow(dead_code)]
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Copy)]
 pub enum BodyType { Static, Kinematic, Dynamic }
+
+
 
 #[derive(Component, Clone)]
 pub struct Collider {
@@ -45,4 +51,12 @@ impl Transform {
 }
 
 #[derive(Component, Clone)]
-pub struct Scroll {}
+pub struct BgScroll {
+    pub reposition_size : f32,
+}
+
+#[derive(Component, Clone)]
+pub struct PipeScroll {
+    pub reposition_size : f32,
+    pub pipe_index : u8,
+}

@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 use rand::rngs::ThreadRng;
 use specs::{ Join, World, WorldExt};
-use crate::builder::background;
+use winit::event::{ElementState, VirtualKeyCode};
+use crate::builder::{background, obstacle};
 
 use crate::components::*;
 use crate::renderer::InstanceTileRaw;
@@ -30,31 +31,60 @@ impl GameState {
         self.world.register::<Transform>();
         self.world.register::<Collider>();
         self.world.register::<Tile>();
-        self.world.register::<Scroll>();
+        self.world.register::<BgScroll>();
+        self.world.register::<PipeScroll>();
 
         self.world.insert(Camera::init_orthographic(5, 9));
         self.world.insert(DeltaTime(0.05));
+        self.world.insert(GameStage(Stage::Ready));
         self.world.insert(ThreadRng::default());
         self.world.insert(InputHandler::default());
         
 
         background(&mut self.world);
 
+        obstacle(&mut self.world, 16.);
+        obstacle(&mut self.world, 8.);
     }
 
 
     pub fn update(&mut self, dt: f32) {
         {
             let mut delta = self.world.write_resource::<DeltaTime>();
-            *delta = DeltaTime(dt);
+            *delta = DeltaTime(dt * 5.0);
         }
         self.dispatcher.run_now(&mut self.world);
         self.world.maintain();
     }
 
     pub fn handle_keyboard_input(&mut self, input: &winit::event::KeyboardInput) -> bool {
-        let mut input_handler = self.world.write_resource::<InputHandler>();
-        input_handler.receive_keyboard_input(input.state, input.virtual_keycode)
+        let mut game_stage = self.world.write_resource::<GameStage>();
+        match game_stage.0 {
+            Stage::Ready | Stage::End | Stage::Pause => {
+                if input.virtual_keycode.is_none() == false &&  input.state == ElementState::Released {
+                    *game_stage = GameStage(Stage::Run);
+                }
+                return true;
+            }
+            Stage::Run => {
+                match input.virtual_keycode {
+                    Some(code) if code == VirtualKeyCode::P => {
+                        if input.state == ElementState::Released {
+                            *game_stage = GameStage(Stage::Pause);
+                        }
+                        return true;
+                    }
+                    Some(_) => {
+                        let mut input_handler = self.world.write_resource::<InputHandler>();
+                        input_handler.receive_keyboard_input(input.state, input.virtual_keycode.unwrap())
+                    }
+                    None => {
+                        return false;
+                    }
+                }
+
+            }
+        }
     }
 
     pub fn get_camera_uniform(&self) -> [[f32; 4]; 4] {
