@@ -20,6 +20,9 @@ impl<'a> System<'a> for CheckCollision {
 
         for ( e, _, player_tr) in  (&entities, &players, &transforms).join() {
             let pt =player_tr.position;
+            if pt[1] < -7.0  || pt[1] > 9.0{
+                entities.delete(e).expect("delete player fail!!!");
+            }
             for (_, pipe_tr) in  ( & pipes, &transforms).join() {
                 let obstacle_point = [
                     if pt[0] > pipe_tr.position[0] + pipe_tr.size[0] * 0.5 {
