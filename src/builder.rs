@@ -119,5 +119,6 @@ pub fn player(world : &mut World){
                 size: [1.,1.],
             })
             .with(Player::default())
+            .with(Animation::default())
             .build();
 }

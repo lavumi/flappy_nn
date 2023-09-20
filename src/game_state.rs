@@ -49,6 +49,7 @@ impl GameState {
         self.world.register::<Background>();
         self.world.register::<Player>();
         self.world.register::<Pipe>();
+        self.world.register::<Animation>();
 
         self.world.insert(Camera::init_orthographic(5, 9));
         self.world.insert(DeltaTime(0.05));

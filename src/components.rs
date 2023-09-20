@@ -58,3 +58,9 @@ pub struct Player {
     pub force: f32,
     pub jump : bool,
 }
+
+#[derive(Component, Clone, Default)]
+pub struct Animation {
+    pub index : u32,
+    pub delta : f32,
+}

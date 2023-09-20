@@ -1,4 +1,4 @@
-use specs::{Join, Read, System, WriteStorage};
+use specs::{Join, Read, ReadStorage, System, Write, WriteStorage};
 
 use crate::components::{ Player, Transform};
 use crate::game_configs::{GRAVITY, JUMP_FORCE};

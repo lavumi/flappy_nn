@@ -25,7 +25,8 @@ construct_dispatcher!(
     (UpdatePipe, "update_pipe", &[]),
     (UpdatePlayer, "update_player", &[]),
     (CheckCollision, "check_collision", &[]),
-    (CheckGameStage , "check_game_stage" , &[])
+    (CheckGameStage , "check_game_stage" , &[]),
+    (UpdateAnimation , "update_animation" , &[])
 );
 
 pub fn new() -> Box<dyn UnifiedDispatcher + 'static> {
