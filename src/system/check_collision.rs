@@ -1,6 +1,6 @@
 use specs::{Entities, Join, ReadStorage, System};
 
-use crate::components::{ Collider, Pipe, Player, Transform};
+use crate::components::{  Pipe, Player, Transform};
 
 pub struct CheckCollision;
 
