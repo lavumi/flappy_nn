@@ -6,7 +6,7 @@ use winit::{
     window::{Window, WindowBuilder},
 };
 use winit::dpi::{PhysicalPosition, PhysicalSize};
-use crate::game_configs;
+
 
 use crate::game_state::GameState;
 use crate::renderer::*;
@@ -36,6 +36,7 @@ impl Application {
             // Winit prevents sizing with CSS, so we have to set
             // the size manually when on web.
             // use winit::dpi::PhysicalSize;
+            use crate::game_configs;
             window.set_inner_size(PhysicalSize::new(game_configs::SCREEN_SIZE[0], game_configs::SCREEN_SIZE[1]));
 
             use winit::platform::web::WindowExtWebSys;
