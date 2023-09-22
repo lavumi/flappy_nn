@@ -14,7 +14,7 @@ pub struct GPUResourceManager {
     bind_group_layouts: HashMap<String, Arc<BindGroupLayout>>,
     bind_groups: HashMap<String, HashMap<u32, Arc<BindGroup>>>,
     buffers: HashMap<String, Arc<Buffer>>,
-    meshes_by_atlas: HashMap<String, Mesh>
+    meshes_by_atlas: HashMap<String, Mesh>,
 }
 
 impl Default for GPUResourceManager {
@@ -23,7 +23,7 @@ impl Default for GPUResourceManager {
             bind_group_layouts: Default::default(),
             bind_groups: Default::default(),
             buffers: Default::default(),
-            meshes_by_atlas: Default::default()
+            meshes_by_atlas: Default::default(),
         }
     }
 }

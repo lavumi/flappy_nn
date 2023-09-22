@@ -155,7 +155,7 @@ impl PipelineManager {
         default_format: TextureFormat,
         gpu_resource_manager: &GPUResourceManager,
     ) {
-        let shader = device.create_shader_module(wgpu::include_wgsl!("../../assets/image.wgsl"));
+        let shader = device.create_shader_module(wgpu::include_wgsl!("../../assets/shader/texture.wgsl"));
         let render_pipeline = PipelineDesc::default().build(shader, &device, default_format, &gpu_resource_manager);
         self.pipelines.insert("tile_pl".to_string(), render_pipeline);
     }

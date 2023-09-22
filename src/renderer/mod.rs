@@ -3,6 +3,7 @@ pub use mesh::{InstanceTileRaw, Mesh};
 pub use pipeline_manager::PipelineManager;
 pub use renderer::RenderState;
 pub use texture::Texture;
+pub use font_manager::FontManager;
 pub use vertex::*;
 
 mod renderer;
@@ -11,4 +12,5 @@ mod pipeline_manager;
 mod gpu_resource_manager;
 mod vertex;
 mod mesh;
+mod font_manager;
 
