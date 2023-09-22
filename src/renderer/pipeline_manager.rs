@@ -58,10 +58,6 @@ impl PipelineDesc {
         gpu_resource_manager : &GPUResourceManager
     ) -> wgpu::RenderPipeline {
 
-        //여기 코드 이상하다...
-        //이러면 gpu_resource_manager에 있는 데이터가 아니라,
-        //unwrap 해서 새로 생성된 데이터들이 스코프에 묶여서 사용되는거 아닌가?
-        //이거 어떻게 해야 예쁘게 되는거지?
         let bind_group_layouts = self
                 .layouts
                 .iter()
@@ -158,6 +154,23 @@ impl PipelineManager {
         let shader = device.create_shader_module(wgpu::include_wgsl!("../../assets/shader/texture.wgsl"));
         let render_pipeline = PipelineDesc::default().build(shader, &device, default_format, &gpu_resource_manager);
         self.pipelines.insert("tile_pl".to_string(), render_pipeline);
+
+        // let shader = device.create_shader_module(wgpu::include_wgsl!("../../assets/shader/font.wgsl"));
+        // let render_pipeline = PipelineDesc{
+        //     primitive_topology: wgpu::PrimitiveTopology::TriangleList,
+        //     depth_stencil: None,
+        //     use_instance: true,
+        //     sample_count: 1,
+        //     sampler_mask: 0,
+        //     alpha_to_coverage_enabled: true,
+        //     layouts: vec!["camera_bind_group_layout".to_string(), "font_bind_group_layout".to_string()],
+        //     front_face:wgpu::FrontFace::Ccw,
+        //     cull_mode: None,
+        // }.build(shader, &device, TextureFormat::R8Unorm, &gpu_resource_manager);
+        //
+        //
+        // self.pipelines.insert("font_pl".to_string(), render_pipeline);
+
     }
 
     pub fn get_pipeline(&self , name: &str) -> &wgpu::RenderPipeline{

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use rand::rngs::ThreadRng;
-use specs::{Join, World, WorldExt};
+use specs::{Builder, Join, World, WorldExt};
 
 use crate::components::*;
 use crate::renderer::InstanceTileRaw;
@@ -36,6 +36,13 @@ impl GameState {
         self.world.insert(InputHandler::default());
 
 
+        self.world.create_entity()
+                .with(Tile{
+                    uv: [0.,1.,0.,1.],
+                    atlas: "font".to_string(),
+                })
+                .with(Transform{ position: [0.,0.,0.], size: [10.,10.] })
+                .build();
 
     }
 

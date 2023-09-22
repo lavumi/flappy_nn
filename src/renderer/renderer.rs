@@ -6,7 +6,7 @@ use winit::window::Window;
 use crate::renderer::gpu_resource_manager::GPUResourceManager;
 use crate::renderer::mesh::InstanceTileRaw;
 use crate::renderer::pipeline_manager::PipelineManager;
-use crate::renderer::texture;
+use crate::renderer::{FontManager, texture};
 
 pub struct RenderState {
     pub device: wgpu::Device,
@@ -87,7 +87,7 @@ impl RenderState {
 
 
         let depth_texture = texture::Texture::create_depth_texture(&device, &config, "depth_texture");
-        let color = wgpu::Color { r: 0.0, g: 0.0, b: 0.0, a: 1.0 };
+        let color = wgpu::Color { r: 0.5, g: 0.5, b: 0.5, a: 1.0 };
 
         let aspect_ratio = size.width as f32 / size.height as f32;
         let viewport_data = [0., 0., size.width as f32, size.height as f32, 0., 1.];
@@ -96,6 +96,10 @@ impl RenderState {
         gpu_resource_manager.initialize(&device);
         let mut pipeline_manager = PipelineManager::default();
         pipeline_manager.init_pipelines(&device, config.format, &gpu_resource_manager);
+
+
+
+
 
         Self {
             device,
@@ -111,9 +115,14 @@ impl RenderState {
         }
     }
 
-    pub fn init_resources(&mut self) {
+    pub async fn init_resources(&mut self) {
         self.gpu_resource_manager.init_atlas(&self.device, &self.queue);
         self.gpu_resource_manager.init_meshes(&self.device);
+
+        let font_atlas_texture = FontManager::new(&self.device, &self.queue).await.unwrap();
+
+        self.gpu_resource_manager.init_font_atlas(&self.device, font_atlas_texture);
+
     }
 
 
@@ -211,6 +220,10 @@ impl RenderState {
             let render_pipeline = self.pipeline_manager.get_pipeline("tile_pl");
             render_pass.set_pipeline(render_pipeline);
             self.gpu_resource_manager.render(&mut render_pass);
+
+            // let render_pipeline = self.pipeline_manager.get_pipeline("font_pl");
+            // render_pass.set_pipeline(render_pipeline);
+            // self.gpu_resource_manager.render(&mut render_pass);
         }
 
 

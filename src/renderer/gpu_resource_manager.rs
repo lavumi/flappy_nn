@@ -75,6 +75,30 @@ impl GPUResourceManager {
                 ],
                 label: Some("camera_bind_group_layout"),
             }));
+
+        self.add_bind_group_layout(
+            "font_bind_group_layout",
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                entries: &[
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            multisampled: false,
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            sample_type: wgpu::TextureSampleType::Uint,
+                        },
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                        count: None,
+                    },
+                ],
+                label: Some("font_bind_group_layout"),
+            }));
     }
 
     fn init_camera_bind_group(&mut self, device: &Device) {
@@ -110,13 +134,18 @@ impl GPUResourceManager {
         self.make_bind_group("bg", diffuse_texture, device);
         let diffuse_texture = Texture::from_bytes(device, queue, include_bytes!("../../assets/img/player.png"), "player").unwrap();
         self.make_bind_group("player", diffuse_texture, device);
+
+        let diffuse_texture = Texture::from_bytes(device, queue, include_bytes!("../../assets/img/font.png"), "font").unwrap();
+        self.make_bind_group("font", diffuse_texture, device);
     }
 
     pub fn init_meshes(&mut self, device: &Device) {
-        self.add_mesh("tile", make_tile_mesh(device, "base_tile".to_string()));
-        self.add_mesh("bg", make_tile_mesh(device, "base_tile".to_string()));
-        self.add_mesh("player", make_tile_mesh(device, "base_tile".to_string()));
+        self.add_mesh("tile", make_tile_mesh(device, "tile".to_string()));
+        self.add_mesh("bg", make_tile_mesh(device, "bg".to_string()));
+        self.add_mesh("player", make_tile_mesh(device, "player".to_string()));
     }
+
+
 
     fn make_bind_group<T: Into<String> + Copy>(&mut self, name: T, diffuse_texture: Texture, device: &Device) {
         let texture_bind_group_layout = self.get_bind_group_layout("texture_bind_group_layout").unwrap();
@@ -280,9 +309,24 @@ impl GPUResourceManager {
         self.render_meshes(render_pass, "bg");
         self.render_meshes(render_pass, "tile");
         self.render_meshes(render_pass, "player");
-
-        // self.render_meshes(render_pass, "character");
-        // self.render_meshes(render_pass, "enemy/zombie");
-        // self.render_meshes(render_pass, "projectiles");
+        self.render_meshes(render_pass, "font");
     }
+
+
+
+    pub fn init_font_atlas(&mut self, device: &Device, font_texture : wgpu::Texture) {
+        // let diffuse_texture = Texture::from_wgpu_texture(device, font_texture).unwrap();
+        // self.make_bind_group("font", diffuse_texture, device);
+        self.add_mesh("font", make_tile_mesh(device, "font".to_string()));
+
+    }
+
+    // pub fn render_font<'a>(
+    //     &'a self,
+    //     render_pass: &mut RenderPass<'a>,
+    // ) {
+    //     self.set_bind_group(render_pass, "camera");
+    //     self.render_meshes(render_pass, "font");
+    //
+    // }
 }

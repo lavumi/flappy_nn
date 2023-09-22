@@ -55,10 +55,10 @@ impl Application {
         let mut gs = GameState::default();
         gs.init();
         let mut rs = RenderState::new(&window).await;
-        rs.init_resources();
+        rs.init_resources().await;
 
 
-        FontManager::initialize(&rs.device, &rs.queue).await;
+
 
         let size = window.inner_size();
         let prev_mouse_position = PhysicalPosition::new(0.0, 0.0);
