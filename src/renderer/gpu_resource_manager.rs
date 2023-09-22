@@ -14,7 +14,7 @@ pub struct GPUResourceManager {
     bind_group_layouts: HashMap<String, Arc<BindGroupLayout>>,
     bind_groups: HashMap<String, HashMap<u32, Arc<BindGroup>>>,
     buffers: HashMap<String, Arc<Buffer>>,
-    meshes_by_atlas: HashMap<String, Mesh>
+    meshes_by_atlas: HashMap<String, Mesh>,
 }
 
 impl Default for GPUResourceManager {
@@ -23,7 +23,7 @@ impl Default for GPUResourceManager {
             bind_group_layouts: Default::default(),
             bind_groups: Default::default(),
             buffers: Default::default(),
-            meshes_by_atlas: Default::default()
+            meshes_by_atlas: Default::default(),
         }
     }
 }
@@ -32,21 +32,6 @@ impl GPUResourceManager {
     pub fn initialize(&mut self, device: &Device) {
         self.init_base_layouts(&device);
         self.init_camera_bind_group(&device);
-    }
-
-    pub fn init_atlas(&mut self, device: &Device, queue: &Queue) {
-        let diffuse_texture = Texture::from_bytes(device, queue, include_bytes!("../../assets/tile.png"), "tile").unwrap();
-        self.make_bind_group("tile", diffuse_texture, device);
-        let diffuse_texture = Texture::from_bytes(device, queue, include_bytes!("../../assets/bg.png"), "bg").unwrap();
-        self.make_bind_group("bg", diffuse_texture, device);
-        let diffuse_texture = Texture::from_bytes(device, queue, include_bytes!("../../assets/player.png"), "player").unwrap();
-        self.make_bind_group("player", diffuse_texture, device);
-    }
-
-    pub fn init_meshes(&mut self, device: &Device) {
-        self.add_mesh("tile", make_tile_mesh(device, "base_tile".to_string()));
-        self.add_mesh("bg", make_tile_mesh(device, "base_tile".to_string()));
-        self.add_mesh("player", make_tile_mesh(device, "base_tile".to_string()));
     }
 
     fn init_base_layouts(&mut self, device: &Device) {
@@ -118,6 +103,21 @@ impl GPUResourceManager {
         self.add_bind_group("camera", 0, camera_bind_group);
     }
 
+    pub fn init_atlas(&mut self, device: &Device, queue: &Queue) {
+        let diffuse_texture = Texture::from_bytes(device, queue, include_bytes!("../../assets/img/tile.png"), "tile").unwrap();
+        self.make_bind_group("tile", diffuse_texture, device);
+        let diffuse_texture = Texture::from_bytes(device, queue, include_bytes!("../../assets/img/bg.png"), "bg").unwrap();
+        self.make_bind_group("bg", diffuse_texture, device);
+        let diffuse_texture = Texture::from_bytes(device, queue, include_bytes!("../../assets/img/player.png"), "player").unwrap();
+        self.make_bind_group("player", diffuse_texture, device);
+    }
+
+    pub fn init_meshes(&mut self, device: &Device) {
+        self.add_mesh("tile", make_tile_mesh(device, "base_tile".to_string()));
+        self.add_mesh("bg", make_tile_mesh(device, "base_tile".to_string()));
+        self.add_mesh("player", make_tile_mesh(device, "base_tile".to_string()));
+    }
+
     fn make_bind_group<T: Into<String> + Copy>(&mut self, name: T, diffuse_texture: Texture, device: &Device) {
         let texture_bind_group_layout = self.get_bind_group_layout("texture_bind_group_layout").unwrap();
         let diffuse_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
@@ -184,7 +184,7 @@ impl GPUResourceManager {
             );
         }
         self.bind_group_layouts
-            .insert(key, Arc::new(bind_group_layout));
+                .insert(key, Arc::new(bind_group_layout));
     }
 
     pub fn get_bind_group_layout<T: Into<String>>(

@@ -58,6 +58,8 @@ impl Application {
         rs.init_resources();
 
 
+        FontManager::initialize(&rs.device, &rs.queue).await;
+
         let size = window.inner_size();
         let prev_mouse_position = PhysicalPosition::new(0.0, 0.0);
         let prev_time = Instant::now();

@@ -3,7 +3,6 @@ use std::iter;
 
 use winit::window::Window;
 
-use crate::components::Transform;
 use crate::renderer::gpu_resource_manager::GPUResourceManager;
 use crate::renderer::mesh::InstanceTileRaw;
 use crate::renderer::pipeline_manager::PipelineManager;
@@ -16,7 +15,7 @@ pub struct RenderState {
     pub queue: wgpu::Queue,
     pub config: wgpu::SurfaceConfiguration,
 
-    pub gpu_resource_manager : GPUResourceManager,
+    pub gpu_resource_manager: GPUResourceManager,
     pub pipeline_manager : PipelineManager,
 
     color: wgpu::Color,

@@ -33,6 +33,9 @@ impl GameState {
         self.world.insert(Camera::init_orthographic(16, 12));
         self.world.insert(DeltaTime(0.05));
         self.world.insert(ThreadRng::default());
+        self.world.insert(InputHandler::default());
+
+
 
     }
 
