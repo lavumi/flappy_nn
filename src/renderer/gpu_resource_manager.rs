@@ -35,11 +35,11 @@ impl GPUResourceManager {
     }
 
     pub fn init_atlas(&mut self, device: &Device, queue: &Queue) {
-        let diffuse_texture = Texture::from_bytes(device, queue, include_bytes!("../../assets/tile.png"), "tile").unwrap();
+        let diffuse_texture = Texture::from_bytes(device, queue, include_bytes!("../../assets/img/tile.png"), "tile").unwrap();
         self.make_bind_group("tile", diffuse_texture, device);
-        let diffuse_texture = Texture::from_bytes(device, queue, include_bytes!("../../assets/bg.png"), "bg").unwrap();
+        let diffuse_texture = Texture::from_bytes(device, queue, include_bytes!("../../assets/img/bg.png"), "bg").unwrap();
         self.make_bind_group("bg", diffuse_texture, device);
-        let diffuse_texture = Texture::from_bytes(device, queue, include_bytes!("../../assets/player.png"), "player").unwrap();
+        let diffuse_texture = Texture::from_bytes(device, queue, include_bytes!("../../assets/img/player.png"), "player").unwrap();
         self.make_bind_group("player", diffuse_texture, device);
     }
 
