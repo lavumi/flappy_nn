@@ -7,6 +7,7 @@ use crate::renderer::gpu_resource_manager::GPUResourceManager;
 use crate::renderer::mesh::InstanceTileRaw;
 use crate::renderer::pipeline_manager::PipelineManager;
 use crate::renderer::{FontManager, texture};
+use crate::renderer::font_manager::Text;
 
 pub struct RenderState {
     pub device: wgpu::Device,
@@ -119,9 +120,9 @@ impl RenderState {
         self.gpu_resource_manager.init_atlas(&self.device, &self.queue);
         self.gpu_resource_manager.init_meshes(&self.device);
 
-        let font_atlas_texture = FontManager::new(&self.device, &self.queue).await.unwrap();
 
-        self.gpu_resource_manager.init_font_atlas(&self.device, font_atlas_texture);
+        self.gpu_resource_manager.init_ui_atlas(&self.device, &self.queue);
+        self.gpu_resource_manager.init_ui_meshes(&self.device);
 
     }
 
@@ -175,6 +176,12 @@ impl RenderState {
         for pair in tile_instance_data_hashmap {
             self.gpu_resource_manager.update_mesh_instance(pair.0, &self.device, &self.queue, pair.1);
         }
+
+        self.gpu_resource_manager.update_font_matrix(&self.device, &self.queue, Text{
+            content: "testmessage".to_string(),
+            position: [0.,0.,0.],
+            size: [1.,1.],
+        });
     }
 
     pub fn render(&self) -> Result<(), wgpu::SurfaceError> {
@@ -221,9 +228,12 @@ impl RenderState {
             render_pass.set_pipeline(render_pipeline);
             self.gpu_resource_manager.render(&mut render_pass);
 
-            // let render_pipeline = self.pipeline_manager.get_pipeline("font_pl");
-            // render_pass.set_pipeline(render_pipeline);
-            // self.gpu_resource_manager.render(&mut render_pass);
+
+
+
+            let render_pipeline = self.pipeline_manager.get_pipeline("font_pl");
+            render_pass.set_pipeline(render_pipeline);
+            self.gpu_resource_manager.render_ui(&mut render_pass);
         }
 
 

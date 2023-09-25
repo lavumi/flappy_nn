@@ -1,36 +1,55 @@
 use std::cmp::max;
 use std::collections::HashMap;
 use wgpu::util::DeviceExt;
-use crate::renderer::Texture;
+use crate::renderer::{InstanceTileRaw, Texture};
+
+
+pub struct Text {
+    pub content: String,
+    pub position: [f32; 3],
+    pub size: [f32; 2],
+}
+
+
+
+const RENDER_CHARACTER_ARRAY:[char;63] = [
+    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'u', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':'
+];
+
 
 pub struct FontManager {
-    pub font_map: HashMap<char, u8>,
-    bind_group_layout : wgpu::BindGroupLayout,
-    bind_group : wgpu::BindGroup
+    pub font_map: HashMap<char, [f32;4]>,
+}
+
+
+impl Default for FontManager {
+    fn default() -> Self {
+        FontManager{
+            font_map: Default::default(),
+        }
+    }
 }
 
 
 impl FontManager {
-    pub async fn new(device : &wgpu::Device, queue : &wgpu::Queue) -> Result<wgpu::Texture, wgpu::SurfaceError>{
+    pub async fn make_font_atlas(device : &wgpu::Device, queue : &wgpu::Queue) -> Result<wgpu::Texture, wgpu::SurfaceError>{
 
         let font = include_bytes!("../../assets/font/plp.otf") as &[u8];
         let font = fontdue::Font::from_bytes(font, fontdue::FontSettings::default()).unwrap();
 
-        let render_character_array = vec![
-            'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','u','s','t','u','v','w','x','y','z',
-            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-            '0','1','2','3','4','5','6','7','8','9', ':'
-        ];
-
         let mut max_size = [0, 0];
         let mut font_data = vec![];
-        for character in render_character_array {
+        for character in RENDER_CHARACTER_ARRAY {
             let (metrics, bitmap) = font.rasterize(character, 30.0);
             font_data.push( (metrics, bitmap) );
 
             max_size[0] = max(max_size[0], metrics.width);
             max_size[1] = max(max_size[1], metrics.height);
         }
+
+        log::info!("{:?}", max_size);
 
 
 
@@ -193,4 +212,53 @@ impl FontManager {
         Ok(texture)
     }
 
+
+    pub fn init(&mut self){
+        // let font = include_bytes!("../../assets/font/plp.otf") as &[u8];
+        // let font = fontdue::Font::from_bytes(font, fontdue::FontSettings::default()).unwrap();
+
+        let char_in_row = 14;
+        for (index, character) in RENDER_CHARACTER_ARRAY.iter().enumerate() {
+
+            let uv = [
+                (index  % char_in_row ) as f32* 18. /256.,
+                (index  % char_in_row ) as f32* 18. /256. + 18./256.,
+                (index  / char_in_row ) as f32* 29. / 256.,
+                (index  / char_in_row ) as f32* 29. / 256. + 29./256.,
+            ];
+
+            self.font_map.insert(character.clone() , uv);
+        }
+
+    }
+
+    pub fn get_uv(&self, char_key: char) -> &[f32; 4] {
+        match self.font_map.get(&char_key) {
+            Some(value) => value,
+            None => panic!("try to use unloaded font")
+        }
+    }
+
+
+    pub fn make_instance_buffer(&self, text: Text)-> Vec<InstanceTileRaw>{
+
+        let mut result = Vec::new();
+        let mut position = cgmath::Vector3 { x: text.position[0], y: text.position[1], z: text.position[2] };
+        let scale_matrix = cgmath::Matrix4::from_nonuniform_scale(text.size[0], text.size[1], 1.0);
+
+
+        for txt in text.content.chars() {
+            let uv = self.get_uv(txt).clone();
+            let translation_matrix = cgmath::Matrix4::from_translation(position);
+
+            let model = (translation_matrix * scale_matrix).into();
+            result.push(InstanceTileRaw{
+                uv,
+                model,
+            });
+            position.x += text.size[0];
+        }
+
+        return result;
+    }
 }

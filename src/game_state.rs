@@ -30,20 +30,19 @@ impl GameState {
         self.world.register::<Collider>();
         self.world.register::<Tile>();
 
-        self.world.insert(Camera::init_orthographic(16, 12));
+        self.world.insert(Camera::init_orthographic(16, 9));
         self.world.insert(DeltaTime(0.05));
         self.world.insert(ThreadRng::default());
         self.world.insert(InputHandler::default());
 
 
-        self.world.create_entity()
-                .with(Tile{
-                    uv: [0.,1.,0.,1.],
-                    atlas: "font".to_string(),
-                })
-                .with(Transform{ position: [0.,0.,0.], size: [10.,10.] })
-                .build();
-
+        // self.world.create_entity()
+        //         .with(Tile{
+        //             uv: [0.,0.0703125,0.,0.11328125],
+        //             atlas: "font".to_string(),
+        //         })
+        //         .with(Transform{ position: [0.,0.,0.], size: [10.,10.] })
+        //         .build();
     }
 
 

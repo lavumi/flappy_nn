@@ -1,5 +1,6 @@
 use specs::*;
 use specs_derive::Component;
+use crate::renderer::InstanceTileRaw;
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Copy)]

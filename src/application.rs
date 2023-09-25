@@ -176,6 +176,8 @@ impl Application {
         let instances = self.gs.get_tile_instance();
         self.rs.update_mesh_instance_bulk(instances);
 
+
+
         self.rs.render()
     }
 }
