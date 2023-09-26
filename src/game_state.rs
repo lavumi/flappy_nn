@@ -3,10 +3,10 @@ use rand::rngs::ThreadRng;
 use specs::{Builder, Join, World, WorldExt};
 
 use crate::components::*;
-use crate::renderer::InstanceTileRaw;
 use crate::resources::*;
 use crate::system;
 use crate::system::UnifiedDispatcher;
+use crate::renderer::*;
 
 pub struct GameState {
     pub world: World,
@@ -29,6 +29,7 @@ impl GameState {
         self.world.register::<Transform>();
         self.world.register::<Collider>();
         self.world.register::<Tile>();
+        self.world.register::<Text>();
 
         self.world.insert(Camera::init_orthographic(16, 9));
         self.world.insert(DeltaTime(0.05));
@@ -36,14 +37,32 @@ impl GameState {
         self.world.insert(InputHandler::default());
 
 
-        // self.world.create_entity()
-        //         .with(Tile{
-        //             uv: [0.,0.0703125,0.,0.11328125],
-        //             atlas: "font".to_string(),
-        //         })
-        //         .with(Transform{ position: [0.,0.,0.], size: [10.,10.] })
-        //         .build();
+        self.world.create_entity()
+                .with(Text{
+                    content: "this is test message".to_string(),
+                })
+                .with(Transform{ position: [-5.,0.,0.], size: [1.,1.] })
+                .build();
+
+        self.world.create_entity()
+                .with(Text{
+                    content: "ha ha ha".to_string(),
+                })
+                .with(Transform{ position: [-5.,3.,0.], size: [1.,1.] })
+                .build();
     }
+
+
+    //          TextRenderData {
+    //              content: "testmessage".to_string(),
+    //              position: [0., 0., 0.],
+    //              size: [1., 1.],
+    //          },
+    //          TextRenderData {
+    //              content: "testmessage2".to_string(),
+    //              position: [0., 3., 0.],
+    //              size: [1., 1.],
+    //          }
 
 
     pub fn update(&mut self, dt: f32) {
@@ -66,20 +85,22 @@ impl GameState {
         return camera_uniform;
     }
 
-    pub fn get_tile_instance(&self) -> HashMap<String, Vec<InstanceTileRaw>> {
+
+
+    pub fn get_tile_instance(&self) -> HashMap<String, Vec<TileRenderData>> {
         let tiles = self.world.read_storage::<Tile>();
         let transforms = self.world.read_storage::<Transform>();
         let rt_data = (&tiles, &transforms).join().collect::<Vec<_>>();
 
         let mut tile_instance_data_hashmap = HashMap::new();
-
-
         for (tile, transform) in rt_data {
             let atlas = tile.atlas.clone();
-            let instance = InstanceTileRaw {
+            let instance = TileRenderData {
                 uv: tile.uv.clone(),
-                model: transform.get_matrix(),
+                position : transform.position.clone(),
+                size : transform.size.clone()
             };
+
 
             tile_instance_data_hashmap
                     .entry(atlas)
@@ -88,5 +109,25 @@ impl GameState {
         }
 
         tile_instance_data_hashmap
+    }
+
+
+    pub fn get_font_instance(&self) -> Vec<TextRenderData> {
+        let texts = self.world.read_storage::<Text>();
+        let transforms = self.world.read_storage::<Transform>();
+        let rt_data = (&texts, &transforms).join().collect::<Vec<_>>();
+
+        let mut text_render_data = Vec::new();
+        for (text, transform) in rt_data {
+            let instance = TextRenderData {
+                content: text.content.clone(),
+                position : transform.position.clone(),
+                size : transform.size.clone()
+            };
+
+            text_render_data.push( instance );
+        }
+
+        text_render_data
     }
 }

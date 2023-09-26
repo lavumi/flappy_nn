@@ -1,15 +1,7 @@
 use std::cmp::max;
 use std::collections::HashMap;
-use wgpu::util::DeviceExt;
-use crate::renderer::{InstanceTileRaw, Texture};
-
-
-pub struct Text {
-    pub content: String,
-    pub position: [f32; 3],
-    pub size: [f32; 2],
-}
-
+use crate::renderer::mesh::InstanceTileRaw;
+use crate::renderer::TextRenderData;
 
 
 const RENDER_CHARACTER_ARRAY:[char;63] = [
@@ -17,6 +9,8 @@ const RENDER_CHARACTER_ARRAY:[char;63] = [
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':'
 ];
+
+
 
 
 pub struct FontManager {
@@ -240,7 +234,7 @@ impl FontManager {
     }
 
 
-    pub fn make_instance_buffer(&self, text: Text)-> Vec<InstanceTileRaw>{
+    pub fn make_instance_buffer(&self, text: &TextRenderData)-> Vec<InstanceTileRaw>{
 
         let mut result = Vec::new();
         let mut position = cgmath::Vector3 { x: text.position[0], y: text.position[1], z: text.position[2] };
@@ -248,6 +242,12 @@ impl FontManager {
 
 
         for txt in text.content.chars() {
+            if txt == ' '{
+                position.x += text.size[0];
+                continue;
+            }
+
+
             let uv = self.get_uv(txt).clone();
             let translation_matrix = cgmath::Matrix4::from_translation(position);
 

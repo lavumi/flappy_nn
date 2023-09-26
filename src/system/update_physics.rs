@@ -1,6 +1,6 @@
-use specs::{Entities, Entity, Join, ReadExpect, System, WriteExpect, WriteStorage};
+use specs::{Entities, System, WriteStorage};
 
-use crate::components::{BodyType, Collider, Transform};
+use crate::components::{Collider, Transform};
 
 pub struct UpdatePhysics;
 
@@ -11,5 +11,5 @@ impl<'a> System<'a> for UpdatePhysics {
         WriteStorage<'a, Transform>
     );
 
-    fn run(&mut self, (entities, mut col, mut tf): Self::SystemData) {}
+    fn run(&mut self, (_entities, mut _col, mut _tf): Self::SystemData) {}
 }

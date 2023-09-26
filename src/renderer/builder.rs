@@ -1,7 +1,7 @@
 use wgpu::Device;
 use wgpu::util::DeviceExt;
-
-use crate::renderer::{Mesh, Vertex};
+use crate::renderer::mesh::Mesh;
+use crate::renderer::vertex::Vertex;
 
 pub fn make_tile_mesh(device: &Device, atlas_name: String) -> Mesh {
     //region [ Vertex Data ]
