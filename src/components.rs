@@ -36,6 +36,7 @@ pub struct Transform {
 #[derive(Component, Clone)]
 pub struct Text {
     pub content: String,
+    pub color : [f32;3]
 }
 
 #[derive(Component, Clone)]

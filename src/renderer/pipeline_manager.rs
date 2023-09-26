@@ -1,15 +1,15 @@
 use std::collections::HashMap;
 
-use wgpu::{Device, Face, ShaderModule, TextureFormat};
+use wgpu::{Device, Face, ShaderModule, TextureFormat, VertexBufferLayout};
 use crate::renderer::gpu_resource_manager::GPUResourceManager;
 
 
-use crate::renderer::mesh::InstanceTileRaw;
+use crate::renderer::mesh::{InstanceColorTileRaw, InstanceTileRaw};
 use crate::renderer::texture::Texture;
 use crate::renderer::vertex::Vertex;
 
 #[derive(Debug, Hash, Clone)]
-struct PipelineDesc {
+struct PipelineDesc<'a> {
     // pub shader: String,
     pub primitive_topology: wgpu::PrimitiveTopology,
     pub depth_stencil: Option<wgpu::DepthStencilState>,
@@ -21,37 +21,14 @@ struct PipelineDesc {
     pub layouts: Vec<String>,
     pub front_face: wgpu::FrontFace,
     pub cull_mode: Option<Face>,
-    pub label : String
+    pub label : String,
+    pub buffers : &'a [VertexBufferLayout<'a>],
     // pub depth_bias: i32,
 }
 
-impl Default for PipelineDesc {
-    fn default() -> Self {
-        Self {
-            // shader: "".to_string(),
-            primitive_topology: wgpu::PrimitiveTopology::TriangleList,
-            depth_stencil: Some(wgpu::DepthStencilState {
-                format: Texture::DEPTH_FORMAT,
-                depth_write_enabled: true,
-                depth_compare: wgpu::CompareFunction::LessEqual,
-                stencil: wgpu::StencilState::default(),
-                bias: wgpu::DepthBiasState::default(),
-            }),
-            sample_count: 1,
-            sampler_mask: 0,
-            alpha_to_coverage_enabled: true,
-            layouts: vec!["camera_bind_group_layout".to_string(), "texture_bind_group_layout".to_string()],
-            front_face: wgpu::FrontFace::Ccw,
-            // cull_mode: Some(Face::Back),
-            cull_mode: None,
-            label : "Base Render Pipeline".to_string()
-            // depth_bias: 0,
-        }
-    }
-}
 
-impl PipelineDesc {
-    fn build (
+impl PipelineDesc<'_> {
+    fn build<'a> (
         &self ,
         shader: ShaderModule,
         device: &Device,
@@ -89,7 +66,7 @@ impl PipelineDesc {
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: "vs_main",
-                buffers: &vec![Vertex::desc(), InstanceTileRaw::desc()],
+                buffers : self.buffers,
             },
             fragment: Some(wgpu::FragmentState {
                 module: &shader,
@@ -145,8 +122,28 @@ impl PipelineManager {
         gpu_resource_manager: &GPUResourceManager,
     ) {
         let shader = device.create_shader_module(wgpu::include_wgsl!("../../assets/shader/texture.wgsl"));
-        let render_pipeline = PipelineDesc::default().build(shader, &device, default_format, &gpu_resource_manager);
+        let render_pipeline = PipelineDesc{
+            primitive_topology: wgpu::PrimitiveTopology::TriangleList,
+            depth_stencil: Some(wgpu::DepthStencilState {
+                format: Texture::DEPTH_FORMAT,
+                depth_write_enabled: true,
+                depth_compare: wgpu::CompareFunction::LessEqual,
+                stencil: wgpu::StencilState::default(),
+                bias: wgpu::DepthBiasState::default(),
+            }),
+            buffers : &vec![Vertex::desc(), InstanceTileRaw::desc()],
+            sample_count: 1,
+            sampler_mask: 0,
+            alpha_to_coverage_enabled: true,
+            layouts: vec!["camera_bind_group_layout".to_string(), "texture_bind_group_layout".to_string()],
+            front_face: wgpu::FrontFace::Ccw,
+            // cull_mode: Some(Face::Back),
+            cull_mode: None,
+            label : "Base Render Pipeline".to_string()
+        }.build(shader, &device, default_format, &gpu_resource_manager);
         self.pipelines.insert("tile_pl".to_string(), render_pipeline);
+
+
 
         let shader = device.create_shader_module(wgpu::include_wgsl!("../../assets/shader/font.wgsl"));
         let render_pipeline = PipelineDesc{
@@ -158,13 +155,14 @@ impl PipelineManager {
                 stencil: wgpu::StencilState::default(),
                 bias: wgpu::DepthBiasState::default(),
             }),
+            buffers : &vec![Vertex::desc(), InstanceColorTileRaw::desc()],
             sample_count: 1,
             sampler_mask: 0,
             alpha_to_coverage_enabled: true,
-            layouts: vec!["camera_bind_group_layout".to_string(), "font_bind_group_layout".to_string()],
-            front_face:wgpu::FrontFace::Ccw,
+            layouts: vec!["camera_bind_group_layout".to_string(), "texture_bind_group_layout".to_string()],
+            front_face: wgpu::FrontFace::Ccw,
             cull_mode: None,
-            label: "Font Render Pipeline".to_string()
+            label : "Font Render Pipeline".to_string()
         }.build(shader, &device, default_format, &gpu_resource_manager);
 
 

@@ -8,23 +8,25 @@ struct InstanceInput {
     @location(6) model_matrix_1: vec4<f32>,
     @location(7) model_matrix_2: vec4<f32>,
     @location(8) model_matrix_3: vec4<f32>,
+    @location(9) model_color: vec3<f32>
 };
 
 
 struct VertexInput {
     @location(0) position: vec3<f32>,
     @location(1) tex_coords: vec2<f32>,
+
 }
 
 struct VertexOutput {
     @builtin(position) clip_position: vec4<f32>,
     @location(0) tex_coords: vec2<f32>,
+    @location(1) color: vec3<f32>,
 }
 
 
 @group(0) @binding(0)
 var<uniform> camera: CameraUniform;
-
 
 @vertex
 fn vs_main(
@@ -45,6 +47,7 @@ fn vs_main(
     instance.model_texcoord[2] * model.tex_coords[1] + instance.model_texcoord[3] * (1.0-model.tex_coords[1])
     );// model.tex_coords + instance.model_texcoord;
     out.clip_position =  camera.view_proj *model_matrix * vec4<f32>(model.position, 1.0);
+    out.color = instance.model_color;
     return out;
 }
 
@@ -52,8 +55,7 @@ fn vs_main(
 var t_diffuse: texture_2d<f32>;
 @group(1) @binding(1)
 var s_diffuse: sampler;
-@group(1) @binding(2)
-var<uniform> f_color: vec3<f32>;
+
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
@@ -62,5 +64,5 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
 //    if ( texture.r <= alpha_threshold) {
 //        discard ;
 //    }
-    return vec4(f_color , texture.r);
+    return vec4(in.color , texture.r);
 }

@@ -15,13 +15,11 @@ use crate::renderer::*;
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Copy)]
 pub enum Stage { Ready, Run, Pause, End }
 
-
 impl Default for Stage {
     fn default() -> Self {
         Stage::Ready
     }
 }
-
 
 pub struct GameState {
     pub world: World,
@@ -38,8 +36,6 @@ impl Default for GameState {
         }
     }
 }
-
-
 
 impl GameState {
     pub fn init(&mut self) {
@@ -62,8 +58,6 @@ impl GameState {
         self.init_game();
 
     }
-
-
 
     fn init_game(&mut self){
 
@@ -147,8 +141,6 @@ impl GameState {
         return camera_uniform;
     }
 
-
-
     pub fn get_tile_instance(&self) -> HashMap<String, Vec<TileRenderData>> {
         let tiles = self.world.read_storage::<Tile>();
         let transforms = self.world.read_storage::<Transform>();
@@ -173,7 +165,6 @@ impl GameState {
         tile_instance_data_hashmap
     }
 
-
     pub fn get_font_instance(&self) -> Vec<TextRenderData> {
         let texts = self.world.read_storage::<Text>();
         let transforms = self.world.read_storage::<Transform>();
@@ -184,7 +175,8 @@ impl GameState {
             let instance = TextRenderData {
                 content: text.content.clone(),
                 position : transform.position.clone(),
-                size : transform.size.clone()
+                size : transform.size.clone(),
+                color : text.color
             };
 
             text_render_data.push( instance );

@@ -4,7 +4,6 @@ use std::iter;
 use winit::window::Window;
 
 use crate::renderer::gpu_resource_manager::GPUResourceManager;
-use crate::renderer::mesh::InstanceTileRaw;
 use crate::renderer::pipeline_manager::PipelineManager;
 use crate::renderer::font_manager::FontManager;
 use crate::renderer::render_input_data::*;
@@ -192,7 +191,7 @@ impl RenderState {
                 }).collect::<Vec<_>>();
 
 
-        self.gpu_resource_manager.update_mesh_instance("font", &self.device, &self.queue, tile_instance);
+        self.gpu_resource_manager.update_color_mesh_instance("font", &self.device, &self.queue, tile_instance);
 
     }
 
