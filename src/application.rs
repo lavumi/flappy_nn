@@ -181,21 +181,6 @@ impl Application {
         let instances = self.gs.get_font_instance();
         self.rs.update_text_instance(instances);
 
-        // self.rs.update_text_instance(
-        //      vec![
-        //          TextRenderData {
-        //              content: "testmessage".to_string(),
-        //              position: [0., 0., 0.],
-        //              size: [1., 1.],
-        //          },
-        //          TextRenderData {
-        //              content: "testmessage2".to_string(),
-        //              position: [0., 3., 0.],
-        //              size: [1., 1.],
-        //          },
-        //      ]);
-
-
         self.rs.render()
     }
 

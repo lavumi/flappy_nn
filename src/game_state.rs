@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use rand::rngs::ThreadRng;
 use specs::{ Join, World, WorldExt};
 use winit::event::{ElementState, VirtualKeyCode};
-use crate::builder::{background, pipe, player};
+use crate::builder::{background, pipe, player, score};
 
 use crate::components::*;
 use crate::resources::*;
@@ -72,6 +72,7 @@ impl GameState {
         pipe(&mut self.world, 16.);
         pipe(&mut self.world, 8.);
         player(&mut self.world);
+        score(&mut self.world);
 
         let mut finished = self.world.write_resource::<GameFinished>();
         *finished = GameFinished(false);
@@ -106,7 +107,6 @@ impl GameState {
     }
 
     pub fn handle_keyboard_input(&mut self, input: &winit::event::KeyboardInput) -> bool {
-        // let game_stage = self.world.write_resource::<GameFinished>();
         match self.stage {
             Stage::End => {
                 if input.virtual_keycode.is_none() == false &&  input.state == ElementState::Released {

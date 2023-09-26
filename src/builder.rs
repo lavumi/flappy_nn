@@ -122,3 +122,15 @@ pub fn player(world : &mut World){
             .with(Animation::default())
             .build();
 }
+
+pub fn score(world : &mut World){
+    world.create_entity()
+            .with(Text {
+                content: "SCORE: 0".to_string()
+            })
+            .with(Transform{
+                position: [-4.5,8.5,1.],
+                size: [0.5,0.5],
+            })
+            .build();
+}
