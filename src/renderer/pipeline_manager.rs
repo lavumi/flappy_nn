@@ -11,7 +11,6 @@ struct PipelineDesc {
     // pub shader: String,
     pub primitive_topology: wgpu::PrimitiveTopology,
     pub depth_stencil: Option<wgpu::DepthStencilState>,
-    pub use_instance: bool,
 
     pub sample_count: u32,
     pub sampler_mask: u64,
@@ -20,6 +19,7 @@ struct PipelineDesc {
     pub layouts: Vec<String>,
     pub front_face: wgpu::FrontFace,
     pub cull_mode: Option<Face>,
+    pub label : String
     // pub depth_bias: i32,
 }
 
@@ -28,8 +28,6 @@ impl Default for PipelineDesc {
         Self {
             // shader: "".to_string(),
             primitive_topology: wgpu::PrimitiveTopology::TriangleList,
-            // color_states:vec![],
-            use_instance: true,
             depth_stencil: Some(wgpu::DepthStencilState {
                 format: Texture::DEPTH_FORMAT,
                 depth_write_enabled: true,
@@ -44,6 +42,7 @@ impl Default for PipelineDesc {
             front_face: wgpu::FrontFace::Ccw,
             // cull_mode: Some(Face::Back),
             cull_mode: None,
+            label : "Base Render Pipeline".to_string()
             // depth_bias: 0,
         }
     }
@@ -58,10 +57,6 @@ impl PipelineDesc {
         gpu_resource_manager : &GPUResourceManager
     ) -> wgpu::RenderPipeline {
 
-        //여기 코드 이상하다...
-        //이러면 gpu_resource_manager에 있는 데이터가 아니라,
-        //unwrap 해서 새로 생성된 데이터들이 스코프에 묶여서 사용되는거 아닌가?
-        //이거 어떻게 해야 예쁘게 되는거지?
         let bind_group_layouts = self
                 .layouts
                 .iter()
@@ -79,14 +74,6 @@ impl PipelineDesc {
                 })
                 .collect::<Vec<_>>();
 
-
-        let vertex_buffer = if self.use_instance {
-            vec![Vertex::desc(), InstanceTileRaw::desc()]
-        } else {
-            vec![Vertex::desc()]
-        };
-
-
         let render_pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("Render Pipeline Layout"),
             bind_group_layouts: &bind_group_layout_ref,
@@ -95,12 +82,12 @@ impl PipelineDesc {
 
 
         let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            label: Some("Render Pipeline"),
+            label: Some(self.label.as_str()),
             layout: Some(&render_pipeline_layout),
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: "vs_main",
-                buffers: &vertex_buffer,
+                buffers: &vec![Vertex::desc(), InstanceTileRaw::desc()],
             },
             fragment: Some(wgpu::FragmentState {
                 module: &shader,
@@ -158,6 +145,29 @@ impl PipelineManager {
         let shader = device.create_shader_module(wgpu::include_wgsl!("../../assets/shader/texture.wgsl"));
         let render_pipeline = PipelineDesc::default().build(shader, &device, default_format, &gpu_resource_manager);
         self.pipelines.insert("tile_pl".to_string(), render_pipeline);
+
+        let shader = device.create_shader_module(wgpu::include_wgsl!("../../assets/shader/font.wgsl"));
+        let render_pipeline = PipelineDesc{
+            primitive_topology: wgpu::PrimitiveTopology::TriangleList,
+            depth_stencil: Some(wgpu::DepthStencilState {
+                format: Texture::DEPTH_FORMAT,
+                depth_write_enabled: true,
+                depth_compare: wgpu::CompareFunction::LessEqual,
+                stencil: wgpu::StencilState::default(),
+                bias: wgpu::DepthBiasState::default(),
+            }),
+            sample_count: 1,
+            sampler_mask: 0,
+            alpha_to_coverage_enabled: true,
+            layouts: vec!["camera_bind_group_layout".to_string(), "font_bind_group_layout".to_string()],
+            front_face:wgpu::FrontFace::Ccw,
+            cull_mode: None,
+            label: "Font Render Pipeline".to_string()
+        }.build(shader, &device, default_format, &gpu_resource_manager);
+
+
+        self.pipelines.insert("font_pl".to_string(), render_pipeline);
+
     }
 
     pub fn get_pipeline(&self , name: &str) -> &wgpu::RenderPipeline{
