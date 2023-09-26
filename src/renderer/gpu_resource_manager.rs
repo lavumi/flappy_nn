@@ -6,10 +6,9 @@ use cgmath::SquareMatrix;
 use wgpu::{BindGroup, BindGroupLayout, Buffer, Device, Queue, RenderPass};
 use wgpu::util::DeviceExt;
 
-use crate::object::{make_tile_mesh};
+use crate::renderer::builder::make_tile_mesh;
 use crate::renderer::mesh::{InstanceTileRaw, Mesh};
-use crate::renderer::{FontManager, Texture};
-use crate::renderer::font_manager::Text;
+use crate::renderer::texture::Texture;
 
 pub struct GPUResourceManager {
     bind_group_layouts: HashMap<String, Arc<BindGroupLayout>>,
@@ -17,7 +16,6 @@ pub struct GPUResourceManager {
     buffers: HashMap<String, Arc<Buffer>>,
     meshes_by_atlas: HashMap<String, Mesh>,
 
-    font_manager : FontManager,
 }
 
 impl Default for GPUResourceManager {
@@ -26,8 +24,7 @@ impl Default for GPUResourceManager {
             bind_group_layouts: Default::default(),
             bind_groups: Default::default(),
             buffers: Default::default(),
-            meshes_by_atlas: Default::default(),
-            font_manager: Default::default()
+            meshes_by_atlas: Default::default()
         }
     }
 }
@@ -37,7 +34,7 @@ impl GPUResourceManager {
         self.init_base_layouts(&device);
         self.init_camera_bind_group(&device);
 
-        self.font_manager.init();
+
     }
 
     pub fn init_atlas(&mut self, device: &Device, queue: &Queue) {
@@ -339,32 +336,8 @@ impl GPUResourceManager {
         self.add_mesh("font", make_tile_mesh(device, "font".to_string()));
     }
 
-    pub fn update_font_matrix(&mut self, device: &Device,queue: &Queue, text_list : Text){
-        let mesh = self.meshes_by_atlas.get_mut("font").unwrap();
-
-        let tile_instance = self.font_manager.make_instance_buffer(text_list );
-
-        if tile_instance.len() == 0 {
-            mesh.num_instances = 0;
-            return;
-        }
-        if mesh.num_instances == tile_instance.len() as u32 {
-            queue.write_buffer(mesh.instance_buffer.as_ref().unwrap(), 0, bytemuck::cast_slice(&tile_instance));
-        } else {
-            // log::info!("update_mesh_instance {} before : {} , after : {}", name_str ,mesh.num_instances , tile_instance.len() );
-            let instance_buffer = device.create_buffer_init(
-                &wgpu::util::BufferInitDescriptor {
-                    label: Some(format!("Instance Buffer Font", ).as_str()),
-                    contents: bytemuck::cast_slice(&tile_instance),
-                    usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
-                }
-            );
-            mesh.replace_instance(instance_buffer, tile_instance.len() as u32);
-        }
-    }
-
     fn make_color_bind_group<T: Into<String> + Copy>(&mut self, name: T, diffuse_texture: Texture, device: &Device) {
-        let color_uniform: [f32;3] = cgmath::Vector3::new(0.,0.,0.).into();
+        let color_uniform: [f32;3] = cgmath::Vector3::new(1.,1.,1.).into();
         let color_buffer = device.create_buffer_init(
             &wgpu::util::BufferInitDescriptor {
                 label: Some("Color Buffer"),

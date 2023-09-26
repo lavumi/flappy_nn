@@ -1,9 +1,11 @@
 use std::collections::HashMap;
 
 use wgpu::{Device, Face, ShaderModule, TextureFormat};
+use crate::renderer::gpu_resource_manager::GPUResourceManager;
 
-use crate::renderer::{GPUResourceManager, Texture};
+
 use crate::renderer::mesh::InstanceTileRaw;
+use crate::renderer::texture::Texture;
 use crate::renderer::vertex::Vertex;
 
 #[derive(Debug, Hash, Clone)]

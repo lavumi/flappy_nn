@@ -11,7 +11,6 @@ mod components;
 mod resources;
 mod system;
 mod game_state;
-mod object;
 mod builder;
 mod game_configs;
 

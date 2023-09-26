@@ -6,8 +6,14 @@ use winit::window::Window;
 use crate::renderer::gpu_resource_manager::GPUResourceManager;
 use crate::renderer::mesh::InstanceTileRaw;
 use crate::renderer::pipeline_manager::PipelineManager;
-use crate::renderer::{FontManager, texture};
-use crate::renderer::font_manager::Text;
+use crate::renderer::font_manager::FontManager;
+use crate::renderer::render_input_data::*;
+use crate::renderer::texture;
+
+
+
+
+
 
 pub struct RenderState {
     pub device: wgpu::Device,
@@ -17,7 +23,9 @@ pub struct RenderState {
     pub config: wgpu::SurfaceConfiguration,
 
     pub gpu_resource_manager: GPUResourceManager,
-    pub pipeline_manager : PipelineManager,
+    pub pipeline_manager: PipelineManager,
+
+    font_manager: FontManager,
 
     color: wgpu::Color,
     depth_texture: texture::Texture,
@@ -25,7 +33,6 @@ pub struct RenderState {
     aspect_ratio: f32,
     viewport_data: [f32; 6],
 }
-
 impl RenderState {
     pub async fn new(window: &Window) -> Self {
         let size = window.inner_size();
@@ -43,38 +50,38 @@ impl RenderState {
         // State owns the window so this should be safe.
         let surface = unsafe { instance.create_surface(&window) }.unwrap();
         let adapter = instance
-            .request_adapter(&wgpu::RequestAdapterOptions {
-                power_preference: wgpu::PowerPreference::default(),
-                compatible_surface: Some(&surface),
-                force_fallback_adapter: false,
-            })
-            .await
-            .unwrap();
+                .request_adapter(&wgpu::RequestAdapterOptions {
+                    power_preference: wgpu::PowerPreference::default(),
+                    compatible_surface: Some(&surface),
+                    force_fallback_adapter: false,
+                })
+                .await
+                .unwrap();
         let (device, queue) = adapter
-            .request_device(
-                &wgpu::DeviceDescriptor {
-                    label: None,
-                    features: wgpu::Features::empty(),
-                    // WebGL doesn't support all of wgpu`s features, so if
-                    // we're building for the web we'll have to disable some.
-                    limits: if cfg!(target_arch = "wasm32") {
-                        wgpu::Limits::downlevel_webgl2_defaults()
-                    } else {
-                        wgpu::Limits::default()
+                .request_device(
+                    &wgpu::DeviceDescriptor {
+                        label: None,
+                        features: wgpu::Features::empty(),
+                        // WebGL doesn't support all of wgpu`s features, so if
+                        // we're building for the web we'll have to disable some.
+                        limits: if cfg!(target_arch = "wasm32") {
+                            wgpu::Limits::downlevel_webgl2_defaults()
+                        } else {
+                            wgpu::Limits::default()
+                        },
                     },
-                },
-                // Some(&std::path::Path::new("trace")), // Trace path
-                None,
-            )
-            .await
-            .unwrap();
+                    // Some(&std::path::Path::new("trace")), // Trace path
+                    None,
+                )
+                .await
+                .unwrap();
 
         let surface_caps = surface.get_capabilities(&adapter);
         let surface_format = surface_caps.formats.iter()
-            .copied()
-            // .filter(|f| f.describe().srgb)
-            .next()
-            .unwrap_or(surface_caps.formats[0]);
+                .copied()
+                // .filter(|f| f.describe().srgb)
+                .next()
+                .unwrap_or(surface_caps.formats[0]);
         let config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: surface_format,
@@ -88,7 +95,7 @@ impl RenderState {
 
 
         let depth_texture = texture::Texture::create_depth_texture(&device, &config, "depth_texture");
-        let color = wgpu::Color { r: 0.5, g: 0.5, b: 0.5, a: 1.0 };
+        let color = wgpu::Color { r: 0.0, g: 0.0, b: 0.0, a: 1.0 };
 
         let aspect_ratio = size.width as f32 / size.height as f32;
         let viewport_data = [0., 0., size.width as f32, size.height as f32, 0., 1.];
@@ -99,7 +106,7 @@ impl RenderState {
         pipeline_manager.init_pipelines(&device, config.format, &gpu_resource_manager);
 
 
-
+        let font_manager = FontManager::default();
 
 
         Self {
@@ -113,6 +120,7 @@ impl RenderState {
             depth_texture,
             aspect_ratio,
             viewport_data,
+            font_manager,
         }
     }
 
@@ -124,15 +132,14 @@ impl RenderState {
         self.gpu_resource_manager.init_ui_atlas(&self.device, &self.queue);
         self.gpu_resource_manager.init_ui_meshes(&self.device);
 
+
+        self.font_manager.init();
     }
-
-
 
     #[allow(dead_code)]
     pub fn set_clear_color(&mut self, color: wgpu::Color) {
         self.color = color;
     }
-
     pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
         if new_size.width > 0 && new_size.height > 0 {
             self.config.width = new_size.width;
@@ -157,39 +164,49 @@ impl RenderState {
             }
         }
     }
-
     pub fn update_camera_buffer(&self, camera_uniform: [[f32; 4]; 4]) {
         let camera_buffer = self.gpu_resource_manager.get_buffer("camera_matrix");
         self.queue.write_buffer(&camera_buffer, 0, bytemuck::cast_slice(&[camera_uniform]));
     }
 
+    pub fn update_mesh_instance(&mut self, tile_render_data: HashMap<String, Vec<TileRenderData>>) {
+
+        for pair in tile_render_data {
+
+            let instance_data = (pair.1)
+                    .iter()
+                    .map(|data|{
+                data.get_instance_matrix()
+            }).collect::<Vec<_>>();
 
 
-
-
-    pub fn update_mesh_instance_bulk(&mut self, tile_instance_data_hashmap: HashMap<String, Vec<InstanceTileRaw>>) {
-        for pair in tile_instance_data_hashmap {
-            self.gpu_resource_manager.update_mesh_instance(pair.0, &self.device, &self.queue, pair.1);
+            self.gpu_resource_manager.update_mesh_instance(pair.0, &self.device, &self.queue, instance_data);
         }
+    }
 
-        self.gpu_resource_manager.update_font_matrix(&self.device, &self.queue, Text{
-            content: "testmessage".to_string(),
-            position: [0.,0.,0.],
-            size: [1.,1.],
-        });
+    pub fn update_text_instance(&mut self, texts: Vec<TextRenderData>) {
+        let tile_instance =  texts
+                .iter()
+                .flat_map(|text|{
+                    self.font_manager.make_instance_buffer( text )
+                }).collect::<Vec<_>>();
+
+
+        self.gpu_resource_manager.update_mesh_instance("font", &self.device, &self.queue, tile_instance);
+
     }
 
     pub fn render(&self) -> Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;
         let view = output
-            .texture
-            .create_view(&wgpu::TextureViewDescriptor::default());
+                .texture
+                .create_view(&wgpu::TextureViewDescriptor::default());
 
         let mut encoder = self
-            .device
-            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                label: Some("Render Encoder"),
-            });
+                .device
+                .create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                    label: Some("Render Encoder"),
+                });
 
         {
             let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
@@ -213,17 +230,15 @@ impl RenderState {
             });
 
             render_pass.set_viewport(self.viewport_data[0],
-                                     self.viewport_data[1],
-                                     self.viewport_data[2],
-                                     self.viewport_data[3],
-                                     self.viewport_data[4],
-                                     self.viewport_data[5]);
+                self.viewport_data[1],
+                self.viewport_data[2],
+                self.viewport_data[3],
+                self.viewport_data[4],
+                self.viewport_data[5]);
 
             let render_pipeline = self.pipeline_manager.get_pipeline("tile_pl");
             render_pass.set_pipeline(render_pipeline);
             self.gpu_resource_manager.render(&mut render_pass);
-
-
 
 
             let render_pipeline = self.pipeline_manager.get_pipeline("font_pl");
@@ -236,5 +251,4 @@ impl RenderState {
         output.present();
         Ok(())
     }
-
 }
