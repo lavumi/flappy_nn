@@ -126,8 +126,8 @@ pub fn player(world : &mut World){
 pub fn score(world : &mut World){
     world.create_entity()
             .with(Text {
-                content: "SCORE: 0".to_string(),
-                color: [1.0,0.0,0.0]
+                content: "SCORE: 42".to_string(),
+                color: [0.0,0.0,0.0]
             })
             .with(Transform{
                 position: [-4.5,8.5,1.],

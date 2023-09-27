@@ -1,4 +1,5 @@
 use cgmath::Point3;
+use crate::game_configs::SCREEN_SIZE;
 
 pub struct Camera {
     eye: Point3<f32>,
@@ -67,7 +68,9 @@ impl Camera {
             }
         }
 
-    pub fn init_orthographic(width: u32, height: u32) -> Self {
+    pub fn init_orthographic( height: u32) -> Self {
+        let height = height as f32;
+        let width = SCREEN_SIZE[0] as f32 / SCREEN_SIZE[1] as f32 * height;
         Self {
             // position the camera one unit up and 2 units back
             // +z is out of the screen
@@ -78,8 +81,8 @@ impl Camera {
             up: cgmath::Vector3::unit_y(),
             aspect: 0.0,
             fov_y: 0.0,
-            right: width as f32,
-            top: height as f32,
+            right: width,
+            top: height,
             z_near: 0.0,
             z_far: 100.0,
             perspective: false,

@@ -216,16 +216,16 @@ impl FontManager {
 
 
     pub fn make_instance_buffer(&self, text: &TextRenderData) -> Vec<InstanceColorTileRaw> {
+        let aspect_ratio = 0.62068965;
         let mut result = Vec::new();
         let mut position = cgmath::Vector3 { x: text.position[0], y: text.position[1], z: text.position[2] };
-        let scale_matrix = cgmath::Matrix4::from_nonuniform_scale(text.size[0], text.size[1], 1.0);
+        let scale_matrix = cgmath::Matrix4::from_nonuniform_scale(text.size[0] * aspect_ratio , text.size[1], 1.0);
 
         for txt in text.content.chars() {
             if txt == ' ' {
-                position.x += text.size[0];
+                position.x += text.size[0] * aspect_ratio;
                 continue;
             }
-
 
             let uv = self.get_uv(txt).clone();
             let translation_matrix = cgmath::Matrix4::from_translation(position);
@@ -237,7 +237,7 @@ impl FontManager {
                 model,
                 color ,
             });
-            position.x += text.size[0];
+            position.x += text.size[0] * aspect_ratio;
         }
 
         return result;

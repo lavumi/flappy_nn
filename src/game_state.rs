@@ -48,7 +48,7 @@ impl GameState {
         self.world.register::<Animation>();
         self.world.register::<Text>();
 
-        self.world.insert(Camera::init_orthographic(5, 9));
+        self.world.insert(Camera::init_orthographic( 9));
         self.world.insert(DeltaTime(0.05));
         self.world.insert(GameFinished(false));
         self.world.insert(ThreadRng::default());
