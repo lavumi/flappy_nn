@@ -54,6 +54,7 @@ pub struct Pipe {
 pub struct Player {
     pub force: f32,
     pub jump : bool,
+    pub score : u32
 }
 
 #[derive(Component, Clone, Default)]

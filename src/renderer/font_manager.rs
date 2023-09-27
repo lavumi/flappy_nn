@@ -210,7 +210,7 @@ impl FontManager {
     pub fn get_uv(&self, char_key: char) -> &[f32; 4] {
         match self.font_map.get(&char_key) {
             Some(value) => value,
-            None => panic!("try to use unloaded font")
+            None => panic!("try to use unloaded font {}" , char_key)
         }
     }
 

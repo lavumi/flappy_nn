@@ -178,7 +178,7 @@ impl Application {
         self.rs.update_mesh_instance(instances);
 
 
-        let instances = self.gs.get_font_instance();
+        let instances = self.gs.set_score_text();
         self.rs.update_text_instance(instances);
 
         self.rs.render()

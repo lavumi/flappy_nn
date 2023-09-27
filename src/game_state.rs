@@ -52,6 +52,7 @@ impl GameState {
         self.world.insert(DeltaTime(0.05));
         self.world.insert(GameFinished(false));
         self.world.insert(ThreadRng::default());
+        self.world.insert(Score::default());
         self.world.insert(InputHandler::default());
 
 
@@ -66,7 +67,7 @@ impl GameState {
         pipe(&mut self.world, 16.);
         pipe(&mut self.world, 8.);
         player(&mut self.world);
-        score(&mut self.world);
+        // score(&mut self.world);
 
         let mut finished = self.world.write_resource::<GameFinished>();
         *finished = GameFinished(false);
@@ -181,6 +182,21 @@ impl GameState {
 
             text_render_data.push( instance );
         }
+
+        text_render_data
+    }
+
+
+    pub fn set_score_text(&self) -> Vec<TextRenderData> {
+        let score = self.world.read_resource::<Score>();
+
+
+        let mut text_render_data = vec![TextRenderData {
+            content: format!("SCORE:{}" , score.0),
+            position : [-4.5,8.5,1.],
+            size : [0.5,0.5],
+            color : [0.0,0.0,0.0]
+        }];
 
         text_render_data
     }
