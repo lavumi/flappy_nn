@@ -170,10 +170,6 @@ impl Application {
 
 
         // //2. update meshes
-        // let rt_map_tiles = self.gs.get_map_instance();
-        // self.rs.update_map_instance(rt_map_tiles);
-        //
-        //
         let instances = self.gs.get_tile_instance();
         self.rs.update_mesh_instance(instances);
 

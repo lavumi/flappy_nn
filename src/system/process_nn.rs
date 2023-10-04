@@ -73,7 +73,7 @@ impl<'a> System<'a> for ProcessNN {
             let layer_2 = process_layer(layer_1 ,layer_2_gene, hidden_layer_2_size );
 
 
-            log::info!("{}",layer_2[0]);
+            // log::info!("{}",layer_2[0]);
             pl.jump = layer_2[0] > 0.5;
         }
     }

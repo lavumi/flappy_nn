@@ -57,7 +57,6 @@ pub struct PipeTarget {}
 pub struct Player {
     pub force: f32,
     pub jump : bool,
-    pub score : u32
 }
 
 #[derive(Component, Clone, Default)]
@@ -82,7 +81,8 @@ pub struct NeuralLayer {
 #[derive(Component, Clone)]
 pub struct DNA {
     pub hidden_layers:[usize;2],
-    pub genes:[f32;100]
+    pub genes:[f32;100],
+    pub index:usize,
 }
 
 

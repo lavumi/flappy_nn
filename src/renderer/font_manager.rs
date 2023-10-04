@@ -4,10 +4,10 @@ use crate::renderer::mesh::{InstanceColorTileRaw};
 use crate::renderer::TextRenderData;
 
 
-const RENDER_CHARACTER_ARRAY: [char; 63] = [
-    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'u', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+const RENDER_CHARACTER_ARRAY: [char; 64] = [
+    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':'
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':' , '.',
 ];
 
 
@@ -52,7 +52,7 @@ impl FontManager {
         let output_buffer_size = (u8_size * 256 * 256) as wgpu::BufferAddress;
         let output_buffer_desc = wgpu::BufferDescriptor {
             size: output_buffer_size,
-            usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::COPY_SRC,
+            usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
             label: Some("font atlas buffer"),
             mapped_at_creation: false,
         };
@@ -163,26 +163,26 @@ impl FontManager {
 
         //region [ Save Font Atlas to png for test ]
         // We need to scope the mapping variables so that we can
-        // {
-        //     let buffer_slice = output_buffer.slice(..);
-        //
-        //     // NOTE: We have to create the mapping THEN device.poll() before await
-        //     // the future. Otherwise the application will freeze.
-        //     let (tx, rx) = futures_intrusive::channel::shared::oneshot_channel();
-        //     buffer_slice.map_async(wgpu::MapMode::Read, move |result| {
-        //         tx.send(result).unwrap();
-        //     });
-        //     device.poll(wgpu::Maintain::Wait);
-        //     rx.receive().await.unwrap().unwrap();
-        //
-        //     let data = buffer_slice.get_mapped_range();
-        //
-        //     use image::{ImageBuffer, Luma};
-        //     let buffer =
-        //             ImageBuffer::<Luma<u8>, _>::from_raw(256, 256, data).unwrap();
-        //     buffer.save("image2.png").unwrap();
-        // }
-        // output_buffer.unmap();
+        {
+            let buffer_slice = output_buffer.slice(..);
+
+            // NOTE: We have to create the mapping THEN device.poll() before await
+            // the future. Otherwise the application will freeze.
+            let (tx, rx) = futures_intrusive::channel::shared::oneshot_channel();
+            buffer_slice.map_async(wgpu::MapMode::Read, move |result| {
+                tx.send(result).unwrap();
+            });
+            device.poll(wgpu::Maintain::Wait);
+            rx.receive().await.unwrap().unwrap();
+
+            let data = buffer_slice.get_mapped_range();
+
+            use image::{ImageBuffer, Luma};
+            let buffer =
+                    ImageBuffer::<Luma<u8>, _>::from_raw(256, 256, data).unwrap();
+            buffer.save("image2.png").unwrap();
+        }
+        output_buffer.unmap();
         //endregion
 
 

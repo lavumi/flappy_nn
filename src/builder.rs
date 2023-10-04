@@ -1,8 +1,8 @@
-use rand::{Rng, thread_rng};
 use rand::rngs::ThreadRng;
 use specs::{Builder, World, WorldExt};
 use crate::components::*;
 use crate::game_configs::HOLE_SIZE;
+use crate::resources::GeneHandler;
 
 pub fn background(world: &mut World) {
     world.create_entity()
@@ -132,9 +132,7 @@ pub fn pipe(world: &mut World, pos: f32) {
 // }
 
 pub fn ai_player(world: &mut World) {
-
-    let mut genes = [0f32;100];
-    thread_rng().fill(&mut genes[..]);
+    let dna = world.write_resource::<GeneHandler>().get_dna();
     world.create_entity()
         .with(Tile {
             uv: [0.0, 0.25, 0.0, 1.0],
@@ -146,9 +144,6 @@ pub fn ai_player(world: &mut World) {
         })
         .with(Player::default())
         .with(Animation::default())
-        .with(DNA{
-            hidden_layers: [6,4],
-            genes ,
-        })
+        .with(dna)
         .build();
 }

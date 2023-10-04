@@ -57,6 +57,7 @@ impl GameState {
         self.world.insert(ThreadRng::default());
         self.world.insert(Score::default());
         self.world.insert(InputHandler::default());
+        self.world.insert(GeneHandler::default());
 
 
         self.init_game();
@@ -83,6 +84,9 @@ impl GameState {
         let mut inputs = self.world.write_resource::<InputHandler>();
         *inputs = InputHandler::default();
 
+        let mut score = self.world.write_resource::<Score>();
+        *score = Score::default();
+
         self.stage = Stage::Ready;
     }
 
@@ -100,9 +104,18 @@ impl GameState {
 
     pub fn update(&mut self, dt: f32) {
         self.check_game_finished();
+
+        if self.stage == Stage::End {
+            self.world.write_resource::<GeneHandler>().process_generation();
+            self.init_game();
+            self.stage = Stage::Run;
+        }
+
         if self.stage != Stage::Run {
             return;
         }
+
+
 
         self.update_delta_time(dt);
         self.dispatcher.run_now(&mut self.world);
@@ -197,8 +210,6 @@ impl GameState {
 
     pub fn set_score_text(&self) -> Vec<TextRenderData> {
         let score = self.world.read_resource::<Score>();
-
-
         let mut text_render_data = vec![TextRenderData {
             content: format!("SCORE:{}" , score.0),
             position : [-4.5,8.5,1.],

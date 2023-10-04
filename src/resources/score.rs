@@ -1,2 +1,2 @@
 #[derive(Default)]
-pub struct Score(pub u32);
+pub struct Score(pub f32);
