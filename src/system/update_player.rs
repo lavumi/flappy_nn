@@ -14,11 +14,11 @@ impl<'a> System<'a> for UpdatePlayer {
         Read<'a, DeltaTime>
     );
 
-    fn run(&mut self, (mut players, mut tf, input, dt): Self::SystemData) {
+    fn run(&mut self, (mut players, mut tf, _, dt): Self::SystemData) {
         for ( player, transform) in ( &mut players, &mut tf).join() {
-            if input.jump == true {
-                player.jump = true;
-            }
+            // if input.jump == true {
+            //     player.jump = true;
+            // }
 
             player.force = if player.jump {
                 player.jump = false;

@@ -9,5 +9,6 @@ mod input_handler;
 mod camera;
 mod game_stage;
 mod score;
+mod gene_handler;
 
 

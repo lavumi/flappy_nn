@@ -20,7 +20,7 @@ impl<'a> System<'a> for UpdatePipe {
     );
 
     fn run(&mut self, (pipes, mut tf, dt, mut rng, mut score): Self::SystemData) {
-        let mut rand = -1.0 as f32;
+        let mut rand = -1.0f32;
         for (p, transform) in ( &pipes, &mut tf).join() {
             transform.position[0] -= dt.0 * GAME_SPEED;
             if transform.position[0] + transform.size[0]  / 2.0 < -6.0 {

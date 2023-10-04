@@ -1,8 +1,9 @@
 use std::collections::HashMap;
+
 use rand::rngs::ThreadRng;
 use specs::{ Join, World, WorldExt};
 use winit::event::{ElementState, VirtualKeyCode};
-use crate::builder::{background, pipe, player, score};
+use crate::builder::{background, pipe, ai_player};
 
 use crate::components::*;
 use crate::resources::*;
@@ -45,8 +46,10 @@ impl GameState {
         self.world.register::<Background>();
         self.world.register::<Player>();
         self.world.register::<Pipe>();
+        self.world.register::<PipeTarget>();
         self.world.register::<Animation>();
         self.world.register::<Text>();
+        self.world.register::<DNA>();
 
         self.world.insert(Camera::init_orthographic( 9));
         self.world.insert(DeltaTime(0.05));
@@ -64,10 +67,15 @@ impl GameState {
 
         self.world.delete_all();
         background(&mut self.world);
+
+
         pipe(&mut self.world, 16.);
-        pipe(&mut self.world, 8.);
-        player(&mut self.world);
-        // score(&mut self.world);
+        pipe(&mut self.world, 8. );
+
+        for _ in 0..100 {
+            ai_player(&mut self.world);
+        }
+
 
         let mut finished = self.world.write_resource::<GameFinished>();
         *finished = GameFinished(false);

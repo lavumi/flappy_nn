@@ -23,6 +23,7 @@ construct_dispatcher!(
     (UpdateCamera, "update_camera", &[]),
     (ScrollBackground, "update_scroll", &[]),
     (UpdatePipe, "update_pipe", &[]),
+    (ProcessNN, "process_nn", &[]),
     (UpdatePlayer, "update_player", &[]),
     (CheckCollision, "check_collision", &[]),
     (CheckGameStage , "check_game_stage" , &[]),

@@ -50,6 +50,9 @@ pub struct Pipe {
     pub pipe_index : u8,
 }
 
+#[derive(Component, Clone)]
+pub struct PipeTarget {}
+
 #[derive(Component, Clone, Default)]
 pub struct Player {
     pub force: f32,
@@ -62,3 +65,25 @@ pub struct Animation {
     pub index : u32,
     pub delta : f32,
 }
+
+
+
+
+
+//region [ Neural Network ]
+#[derive(Component, Clone, Default)]
+pub struct NeuralLayer {
+    pub weights: Vec<Vec<f32>>,
+    pub values : Vec<f32>,
+    pub bias : Vec<f32>
+}
+
+
+#[derive(Component, Clone)]
+pub struct DNA {
+    pub hidden_layers:[usize;2],
+    pub genes:[f32;100]
+}
+
+
+//endregion

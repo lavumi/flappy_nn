@@ -1,6 +1,6 @@
 use std::cmp::max;
 use std::collections::HashMap;
-use crate::renderer::mesh::{InstanceColorTileRaw, InstanceTileRaw};
+use crate::renderer::mesh::{InstanceColorTileRaw};
 use crate::renderer::TextRenderData;
 
 
