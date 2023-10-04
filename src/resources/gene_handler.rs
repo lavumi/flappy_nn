@@ -4,6 +4,7 @@ use crate::components::DNA;
 pub struct GeneHandler {
     gene_container: Vec<[f32;100]>,
     score_records: Vec<f32>,
+    pub generation: usize,
 }
 
 impl Default for GeneHandler {
@@ -18,7 +19,8 @@ impl Default for GeneHandler {
         }
         GeneHandler{
             gene_container,
-            score_records: score
+            score_records: score,
+            generation : 0
         }
     }
 }
@@ -62,5 +64,6 @@ impl GeneHandler {
         for score in self.score_records.iter_mut() {
             *score = -1.0f32;
         }
+        self.generation += 1;
     }
 }

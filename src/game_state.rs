@@ -209,9 +209,10 @@ impl GameState {
 
 
     pub fn set_score_text(&self) -> Vec<TextRenderData> {
+        let gene_handler = self.world.read_resource::<GeneHandler>();
         let score = self.world.read_resource::<Score>();
         let mut text_render_data = vec![TextRenderData {
-            content: format!("SCORE:{}" , score.0),
+            content: format!("GENERATION:{}\nSCORE:{}" ,gene_handler.generation, score.0),
             position : [-4.5,8.5,1.],
             size : [0.5,0.5],
             color : [0.0,0.0,0.0]

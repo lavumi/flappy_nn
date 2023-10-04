@@ -226,6 +226,11 @@ impl FontManager {
                 position.x += text.size[0] * aspect_ratio;
                 continue;
             }
+            if txt == '\n' {
+                position.y -= text.size[1];
+                position.x = text.position[0];
+                continue;
+            }
 
             let uv = self.get_uv(txt).clone();
             let translation_matrix = cgmath::Matrix4::from_translation(position);
