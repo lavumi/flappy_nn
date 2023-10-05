@@ -28,7 +28,8 @@
     </style>
 </head>
 
-<body id="wgpu-wasm">
+<body >
+<div id="wgpu-wasm"></div>
 <script type="module">
     import init from "./pkg/flappy_nn.js";
 
@@ -36,8 +37,9 @@
         // wasm.run();
         console.log("WASM Loaded");
         let canvas = document.getElementById("wasm-canvas");
+        canvas.style.height = "40rem";
         canvas.style.width = "auto";
-        canvas.style.height = "70%";
+
 
 
         window.addEventListener('keyup', function (e) {
