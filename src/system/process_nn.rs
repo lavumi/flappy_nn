@@ -41,15 +41,14 @@ impl<'a> System<'a> for ProcessNN {
     );
 
     fn run(&mut self, (pipe, transform, mut pl, dna): Self::SystemData) {
-        let mut pipe_position = [0.0, 0.0];
+        let mut pipe_position = [99.0, 0.0];
 
         for (_, pipe_tr) in (&pipe, &transform).join() {
-            if pipe_tr.position[0] > -1.0 {
+            if pipe_tr.position[0] > -3.0 &&  pipe_position[0] > pipe_tr.position[0] {
                 pipe_position = [pipe_tr.position[0], pipe_tr.position[1]];
-                break;
             }
         }
-
+        log::info!("{:?}" , pipe_position);
 
         for (pl, p_tr, gene) in (&mut pl, &transform, &dna).join() {
             let input_data = vec![

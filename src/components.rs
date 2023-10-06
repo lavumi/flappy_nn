@@ -1,8 +1,6 @@
 use specs::*;
 use specs_derive::Component;
-
-
-
+use crate::game_configs::GENE_SIZE;
 
 
 #[allow(dead_code)]
@@ -81,7 +79,7 @@ pub struct NeuralLayer {
 #[derive(Component, Clone)]
 pub struct DNA {
     pub hidden_layers:[usize;2],
-    pub genes:[f32;100],
+    pub genes:[f32;GENE_SIZE],
     pub index:usize,
 }
 
