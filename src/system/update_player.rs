@@ -22,7 +22,7 @@ impl<'a> System<'a> for UpdatePlayer {
 
             player.force = if player.jump {
                 player.jump = false;
-                 JUMP_FORCE
+                 JUMP_FORCE * dt.0
             } else {
                 player.force - GRAVITY * dt.0
             };
