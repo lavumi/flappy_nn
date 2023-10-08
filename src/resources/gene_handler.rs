@@ -1,4 +1,3 @@
-use std::cmp::max;
 use rand::{Rng, thread_rng};
 use rand::rngs::ThreadRng;
 use crate::components::DNA;
@@ -33,6 +32,9 @@ impl Default for GeneHandler {
 
 impl GeneHandler {
 
+    pub fn get_alive_gene(&self , index : usize)-> [f32;GENE_SIZE]{
+        return self.gene_container[index].clone()
+    }
     pub fn initialize(&mut self){
         for _ in 0..self.gene_count {
             let mut genes = [0f32;GENE_SIZE];
@@ -108,7 +110,7 @@ impl GeneHandler {
 
 
         let remain_gene_count = self.gene_count - survive_count;
-        for i in 0..remain_gene_count {
+        for _ in 0..remain_gene_count {
             let gene_index_0 = self.pick_gene_by_fitness(&accumulated_fitness);
             let gene_index_1 = self.pick_gene_by_fitness(&accumulated_fitness);
 
@@ -133,23 +135,23 @@ impl GeneHandler {
         self.gene_container = next_generation_genes;
     }
 
-    fn make_genes(&mut self) -> [f32;GENE_SIZE]{
-        let mut genes = [0f32;GENE_SIZE];
-        for i in 0..GENE_SIZE {
-            genes[i] = self.rng.gen_range(-16.0..16.0);
-        }
-        return genes;
-    }
+    // fn make_genes(&mut self) -> [f32;GENE_SIZE]{
+    //     let mut genes = [0f32;GENE_SIZE];
+    //     for i in 0..GENE_SIZE {
+    //         genes[i] = self.rng.gen_range(-16.0..16.0);
+    //     }
+    //     return genes;
+    // }
 
     fn evolve(&mut self, gene_index: usize, probability : f32 )-> [f32;GENE_SIZE]{
         let mut gene = self.gene_container[gene_index].clone();
-        let mut evolve_count = 0;
+        // let mut evolve_count = 0;
         for g in gene.iter_mut() {
             let change : f32 = self.rng.gen_range(0.0..1.0);
             if change < probability {
                 let offset = self.rng.gen_range(-EVOLVE_OFFSET..EVOLVE_OFFSET);
                 *g = *g + offset;
-                evolve_count+=1;
+                // evolve_count+=1;
             }
         }
 

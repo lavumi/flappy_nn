@@ -51,7 +51,7 @@ pub fn background(world: &mut World) {
 
 pub fn pipe(world: &mut World, pos: f32) {
     use rand::Rng;
-    let mut rand = 0.0f32;
+    let rand;
     {
         let mut rng = world.write_resource::<ThreadRng>();
         rand = rng.gen_range(3.0..7.0);
@@ -63,7 +63,7 @@ pub fn pipe(world: &mut World, pos: f32) {
         })
         .with(Transform {
             position: [pos, rand - 6.0, 0.2],
-            size: [2.0, 2.],
+            size: [2.0, 2.0],
         })
         .with(Pipe {
             reposition_size: 16.0,
@@ -93,7 +93,7 @@ pub fn pipe(world: &mut World, pos: f32) {
         })
         .with(Transform {
             position: [pos, rand + HOLE_SIZE - 4.0, 0.2],
-            size: [2.0, 2.],
+            size: [2.0, 2.0],
         })
         .with(Pipe {
             reposition_size: 16.0,

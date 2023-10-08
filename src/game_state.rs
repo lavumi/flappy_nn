@@ -1,11 +1,12 @@
 use std::collections::HashMap;
 
 use rand::rngs::ThreadRng;
-use specs::{ Join, World, WorldExt};
+use specs::{Join, World, WorldExt};
 use winit::event::{ElementState, VirtualKeyCode};
 use crate::builder::{background, pipe, ai_player};
 
 use crate::components::*;
+use crate::game_configs::GENE_SIZE;
 use crate::resources::*;
 use crate::system;
 use crate::system::UnifiedDispatcher;
@@ -25,7 +26,7 @@ impl Default for Stage {
 pub struct GameState {
     pub world: World,
     dispatcher: Box<dyn UnifiedDispatcher + 'static>,
-    stage : Stage
+    stage: Stage,
 }
 
 impl Default for GameState {
@@ -33,7 +34,7 @@ impl Default for GameState {
         GameState {
             world: World::new(),
             dispatcher: system::build(),
-            stage : Stage::Ready
+            stage: Stage::Ready,
         }
     }
 }
@@ -51,7 +52,7 @@ impl GameState {
         self.world.register::<Text>();
         self.world.register::<DNA>();
 
-        self.world.insert(Camera::init_orthographic( 9));
+        self.world.insert(Camera::init_orthographic(9));
         self.world.insert(DeltaTime(0.05));
         self.world.insert(GameFinished(false));
         self.world.insert(ThreadRng::default());
@@ -61,17 +62,15 @@ impl GameState {
 
 
         self.init_game();
-
     }
 
-    fn init_game(&mut self){
-
+    fn init_game(&mut self) {
         self.world.delete_all();
         background(&mut self.world);
 
 
         pipe(&mut self.world, 16.);
-        pipe(&mut self.world, 8. );
+        pipe(&mut self.world, 8.);
 
         for _ in 0..100 {
             ai_player(&mut self.world);
@@ -90,14 +89,14 @@ impl GameState {
         self.stage = Stage::Ready;
     }
 
-    fn check_game_finished(&mut self ) {
+    fn check_game_finished(&mut self) {
         let finished = self.world.read_resource::<GameFinished>();
         if finished.0 == true {
             self.stage = Stage::End;
         }
     }
 
-    fn update_delta_time(&mut self, dt : f32 ){
+    fn update_delta_time(&mut self, dt: f32) {
         let mut delta = self.world.write_resource::<DeltaTime>();
         *delta = DeltaTime(dt);
     }
@@ -116,7 +115,6 @@ impl GameState {
         }
 
 
-
         self.update_delta_time(dt);
         self.dispatcher.run_now(&mut self.world);
         self.world.maintain();
@@ -125,14 +123,14 @@ impl GameState {
     pub fn handle_keyboard_input(&mut self, input: &winit::event::KeyboardInput) -> bool {
         match self.stage {
             Stage::End => {
-                if input.virtual_keycode.is_none() == false &&  input.state == ElementState::Released {
+                if input.virtual_keycode.is_none() == false && input.state == ElementState::Released {
                     self.init_game();
                 }
                 return true;
             }
             Stage::Ready | Stage::Pause => {
-                if input.virtual_keycode.is_none() == false &&  input.state == ElementState::Released {
-                   self.stage = Stage::Run;
+                if input.virtual_keycode.is_none() == false && input.state == ElementState::Released {
+                    self.stage = Stage::Run;
                 }
                 return true;
             }
@@ -152,7 +150,6 @@ impl GameState {
                         return false;
                     }
                 }
-
             }
         }
     }
@@ -173,51 +170,89 @@ impl GameState {
             let atlas = tile.atlas.clone();
             let instance = TileRenderData {
                 uv: tile.uv.clone(),
-                position : transform.position.clone(),
-                size : transform.size.clone()
+                position: transform.position.clone(),
+                size: transform.size.clone(),
             };
 
 
             tile_instance_data_hashmap
-                    .entry(atlas)
-                    .or_insert_with(Vec::new)
-                    .push(instance);
+                .entry(atlas)
+                .or_insert_with(Vec::new)
+                .push(instance);
         }
 
         tile_instance_data_hashmap
     }
 
-    pub fn get_font_instance(&self) -> Vec<TextRenderData> {
-        let texts = self.world.read_storage::<Text>();
-        let transforms = self.world.read_storage::<Transform>();
-        let rt_data = (&texts, &transforms).join().collect::<Vec<_>>();
-
-        let mut text_render_data = Vec::new();
-        for (text, transform) in rt_data {
-            let instance = TextRenderData {
-                content: text.content.clone(),
-                position : transform.position.clone(),
-                size : transform.size.clone(),
-                color : text.color
-            };
-
-            text_render_data.push( instance );
-        }
-
-        text_render_data
-    }
+    // pub fn get_font_instance(&self) -> Vec<TextRenderData> {
+    //     let texts = self.world.read_storage::<Text>();
+    //     let transforms = self.world.read_storage::<Transform>();
+    //     let rt_data = (&texts, &transforms).join().collect::<Vec<_>>();
+    //
+    //     let mut text_render_data = Vec::new();
+    //     for (text, transform) in rt_data {
+    //         let instance = TextRenderData {
+    //             content: text.content.clone(),
+    //             position : transform.position.clone(),
+    //             size : transform.size.clone(),
+    //             color : text.color
+    //         };
+    //
+    //         text_render_data.push( instance );
+    //     }
+    //
+    //     text_render_data
+    // }
 
 
     pub fn set_score_text(&self) -> Vec<TextRenderData> {
         let gene_handler = self.world.read_resource::<GeneHandler>();
         let score = self.world.read_resource::<Score>();
-        let mut text_render_data = vec![TextRenderData {
-            content: format!("GENERATION:{}\nSCORE:{:.3}" ,gene_handler.generation, score.0),
-            position : [-4.5,8.5,1.],
-            size : [0.5,0.5],
-            color : [0.0,0.0,0.0]
+        let text_render_data = vec![TextRenderData {
+            content: format!("GENERATION:{}\nSCORE:{:.3}", gene_handler.generation, score.0),
+            position: [-4.5, 8.5, 1.],
+            size: [0.5, 0.5],
+            color: [0.0, 0.0, 0.0],
         }];
 
         text_render_data
+    }
+
+    pub fn get_gene_data(&self) -> ([f32; GENE_SIZE], [f32; 2]) {
+        let gene_handler = self.world.read_resource::<GeneHandler>();
+
+
+        let player = self.world.read_storage::<Player>();
+        let transform = self.world.read_storage::<Transform>();
+        let dna = self.world.read_storage::<DNA>();
+        let pipe = self.world.read_storage::<PipeTarget>();
+        let last_player = (&player, &transform, &dna).join().last();
+
+        let mut pipe_position = [99.0, 0.0];
+        for (_, pipe_tr) in (&pipe, &transform).join() {
+            if pipe_tr.position[0] > -3.0 &&  pipe_position[0] > pipe_tr.position[0] {
+                pipe_position = [pipe_tr.position[0], pipe_tr.position[1]];
+            }
+        }
+
+
+
+
+        let (position, index) = match last_player {
+            None => {
+                ([0.0, 0.0],0)
+            }
+            Some(p) => {
+                ([p.1.position[0], p.1.position[1]],p.2.index)
+            }
+        };
+
+        let input_data = [
+            pipe_position[0] - position[0],
+            pipe_position[1] - position[1],
+        ];
+
+        let gene = gene_handler.get_alive_gene(index);
+        return (gene, input_data);
     }
 }

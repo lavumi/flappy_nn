@@ -1,4 +1,4 @@
-use specs::{Join, Read, ReadStorage, System, WriteStorage};
+use specs::{Join, ReadStorage, System, WriteStorage};
 use crate::components::{DNA, PipeTarget, Player, Transform};
 
 pub struct ProcessNN;
@@ -44,19 +44,17 @@ impl<'a> System<'a> for ProcessNN {
         let mut pipe_position = [99.0, 0.0];
 
         for (_, pipe_tr) in (&pipe, &transform).join() {
-            if pipe_tr.position[0] > -3.0 &&  pipe_position[0] > pipe_tr.position[0] {
+            if pipe_tr.position[0] > -1.5 &&  pipe_position[0] > pipe_tr.position[0] {
                 pipe_position = [pipe_tr.position[0], pipe_tr.position[1]];
             }
         }
-        log::info!("{:?}" , pipe_position);
+        // log::info!("{:?}" , pipe_position);
 
         for (pl, p_tr, gene) in (&mut pl, &transform, &dna).join() {
             let input_data = vec![
                 pipe_position[0] - p_tr.position[0],
                 pipe_position[1] - p_tr.position[1],
             ];
-
-
 
             let input_data_size = 2;
 
@@ -65,23 +63,22 @@ impl<'a> System<'a> for ProcessNN {
             let gene_layer_1 = gene.genes.iter().take(layer_1_gene_size).collect();
             let layer_1 = process_layer(input_data ,gene_layer_1, hidden_layer_1_size );
 
-
             let hidden_layer_2_size = gene.hidden_layers[1];
             let layer_2_gene_size =  (hidden_layer_1_size + 1)  * hidden_layer_2_size;
             let layer_2_gene = gene.genes.iter().skip(layer_1_gene_size).take(layer_2_gene_size).collect();
             let layer_2 = process_layer(layer_1 ,layer_2_gene, hidden_layer_2_size );
 
 
-            // log::info!("{}",layer_2[0]);
-            pl.jump = layer_2[0] > 0.5;
+
+            let output_layer_gene_size= hidden_layer_2_size + 1;
+            let output_layer_gene = gene.genes.iter().skip(layer_1_gene_size + layer_2_gene_size).take(output_layer_gene_size).collect();
+            let output_layer = process_layer(layer_2 ,output_layer_gene, 1 );
+
+
+            pl.jump = output_layer[0] > 0.0f32;
         }
     }
 }
-
-
-
-
-
 
 
 #[cfg(test)]

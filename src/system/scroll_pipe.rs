@@ -26,15 +26,12 @@ impl<'a> System<'a> for UpdatePipe {
             transform.position[0] -= dt.0 * GAME_SPEED;
             if transform.position[0] + transform.size[0]  / 2.0 < -6.0 {
                 if rand < 0.0 {
-                    rand = rng.gen_range(3.0..7.0);
+                    rand = rng.gen_range(1.0..9.0);
                 }
                 transform.position[0] += p.reposition_size;
-
                 match p.pipe_index {
                     0 => {
                         transform.position[1] = rand - 6.0;
-
-                        // log::info!("current Score {}" , score.0);
                     }
                     1 => {
                         transform.position[1] = (rand - 6.0) * 0.5 - 4.0;

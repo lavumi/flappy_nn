@@ -6,6 +6,7 @@ use winit::{
     window::{Window, WindowBuilder},
 };
 use winit::dpi::{PhysicalPosition, PhysicalSize};
+use crate::game_configs::GENE_SIZE;
 
 
 use crate::game_state::GameState;
@@ -127,6 +128,10 @@ impl Application {
             }
             _ => {}
         }
+    }
+
+    pub fn get_gene_data(&self) -> ([f32; GENE_SIZE], [f32;2]){
+        self.gs.get_gene_data()
     }
 
     fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
