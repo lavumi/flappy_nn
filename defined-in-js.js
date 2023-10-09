@@ -117,7 +117,9 @@ export function render( gene, posStr ) {
     network[0].setValue(pos[0]);
     network[1].setValue(pos[1]);
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Fill the canvas with the background color
+    ctx.fillStyle = 'lightblue';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     network[0].render();
     network[1].render();
@@ -126,8 +128,6 @@ export function render( gene, posStr ) {
         let single_gene = array.splice(0,neuron.getGeneSize());
         neuron.render(single_gene);
     }
-
-    console.log(network[network.length -1].value() );
 }
 
 
