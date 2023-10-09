@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use rand::rngs::ThreadRng;
 use specs::{Join, World, WorldExt};
 use winit::event::{ElementState, VirtualKeyCode};
-use crate::builder::{background, pipe, ai_player};
+use crate::builder::{background, pipe, ai_player, player};
 
 use crate::components::*;
 use crate::game_configs::GENE_SIZE;
@@ -75,6 +75,7 @@ impl GameState {
         for _ in 0..100 {
             ai_player(&mut self.world);
         }
+        // player(&mut self.world);
 
 
         let mut finished = self.world.write_resource::<GameFinished>();
@@ -142,6 +143,12 @@ impl GameState {
                         }
                         return true;
                     }
+                    Some(code) if code == VirtualKeyCode::R => {
+                        if input.state == ElementState::Released {
+                            self.force_restart();
+                        }
+                        return true;
+                    }
                     Some(_) => {
                         let mut input_handler = self.world.write_resource::<InputHandler>();
                         input_handler.receive_keyboard_input(input.state, input.virtual_keycode.unwrap())
@@ -203,13 +210,12 @@ impl GameState {
     //
     //     text_render_data
     // }
-
-
     pub fn set_score_text(&self) -> Vec<TextRenderData> {
         let gene_handler = self.world.read_resource::<GeneHandler>();
         let score = self.world.read_resource::<Score>();
+        let players =  self.world.read_storage::<Player>().join().count();
         let text_render_data = vec![TextRenderData {
-            content: format!("GENERATION:{}\nSCORE:{:.3}", gene_handler.generation, score.0),
+            content: format!("Generation:{}\nScore:{:.3}\nSurvive:{}", gene_handler.generation, score.0, players),
             position: [-4.5, 8.5, 1.],
             size: [0.5, 0.5],
             color: [0.0, 0.0, 0.0],
@@ -217,7 +223,6 @@ impl GameState {
 
         text_render_data
     }
-
     pub fn get_gene_data(&self) -> ([f32; GENE_SIZE], [f32; 2]) {
         let gene_handler = self.world.read_resource::<GeneHandler>();
 
@@ -254,5 +259,9 @@ impl GameState {
 
         let gene = gene_handler.get_alive_gene(index);
         return (gene, input_data);
+    }
+
+    pub fn force_restart(&mut self) {
+        self.world.delete_all();
     }
 }

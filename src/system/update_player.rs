@@ -16,13 +16,9 @@ impl<'a> System<'a> for UpdatePlayer {
 
     fn run(&mut self, (mut players, mut tf, _, dt): Self::SystemData) {
         for ( player, transform) in ( &mut players, &mut tf).join() {
-            // if input.jump == true {
-            //     player.jump = true;
-            // }
-
             player.force = if player.jump {
                 player.jump = false;
-                 JUMP_FORCE * dt.0
+                JUMP_FORCE * dt.0
             } else {
                 player.force - GRAVITY * dt.0
             };
