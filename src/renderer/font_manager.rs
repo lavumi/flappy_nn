@@ -28,14 +28,14 @@ impl Default for FontManager {
 impl FontManager {
     #[allow(unused)]
     pub async fn make_font_atlas(device: &wgpu::Device, queue: &wgpu::Queue) -> Result<wgpu::Texture, wgpu::SurfaceError> {
-        let font = include_bytes!("../../assets/font/plp.otf") as &[u8];
+        let font = include_bytes!("../../assets/font/firamono.otf") as &[u8];
         let font = fontdue::Font::from_bytes(font, fontdue::FontSettings::default()).unwrap();
 
         let mut max_size = [0, 0];
         let mut font_data = vec![];
         for character in RENDER_CHARACTER_ARRAY {
-            let (metrics, bitmap) = font.rasterize(character, 30.0);
-            log::info!( "{} : {} : {:?}",character,bitmap.len(), metrics);
+            let (metrics, bitmap) = font.rasterize(character, 32.0);
+            // log::info!( "{} : {} : {:?}",character,bitmap.len(), metrics);
             font_data.push((metrics, bitmap));
 
             max_size[0] = max(max_size[0], metrics.width);
@@ -61,11 +61,9 @@ impl FontManager {
         };
         let output_buffer = device.create_buffer(&output_buffer_desc);
 
-
-        let zeros: [u8; 522] = [0; 522];
-        let middle: [u8; 522] = [128; 522];
-        let full: [u8; 522] = [255; 522];
-
+        // let zeros: [u8; 522] = [0; 522];
+        // let middle: [u8; 522] = [128; 522];
+        // let full: [u8; 522] = [255; 522];
 
         let char_in_row = 256 / max_size[0];
         for (index, font_datum) in font_data.iter().enumerate() {
@@ -73,8 +71,8 @@ impl FontManager {
             let bitmap = &font_datum.1;
 
             let size = wgpu::Extent3d {
-                width: 18 as u32,
-                height: 29 as u32,
+                width: metrics.width as u32,
+                height: metrics.height as u32,
                 depth_or_array_layers: 1,
             };
             let texture = device.create_texture(&wgpu::TextureDescriptor {
@@ -87,14 +85,6 @@ impl FontManager {
                 usage: wgpu::TextureUsages::COPY_SRC | wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
                 view_formats: &[],
             });
-            
-            let test_bitmap = if index %3 == 0 {
-                zeros
-            } else if index % 3 == 1{
-                middle
-            } else {
-                full
-            };
 
             queue.write_texture(
                 wgpu::ImageCopyTexture {
@@ -103,7 +93,7 @@ impl FontManager {
                     origin: wgpu::Origin3d::ZERO,
                     aspect: wgpu::TextureAspect::All,
                 },
-                &test_bitmap,
+                &bitmap,
                 wgpu::ImageDataLayout {
                     offset: 0,
                     bytes_per_row: Some(size.width),
@@ -112,11 +102,11 @@ impl FontManager {
                 size,
             );
 
-
             let offset = (
-                index % char_in_row * max_size[0] + 
-                index / char_in_row * 256 * max_size[1] + 
-                256 * (max_size[1] - size.height as usize)
+                index % char_in_row * max_size[0] 
+                + index / char_in_row * 256 * max_size[1]
+                + metrics.xmin as usize
+                + 256 * (max_size[1] - (metrics.height as i32 + metrics.ymin + 7) as usize) 
             ) as wgpu::BufferAddress;
 
             encoder.copy_texture_to_buffer(
@@ -196,13 +186,11 @@ impl FontManager {
             let data = buffer_slice.get_mapped_range();
 
             use image::{ImageBuffer, Luma};
-            let buffer =
-                    ImageBuffer::<Luma<u8>, _>::from_raw(256, 256, data).unwrap();
+            let buffer = ImageBuffer::<Luma<u8>, _>::from_raw(256, 256, data).unwrap();
             buffer.save("image2.png").unwrap();
         }
         output_buffer.unmap();
         //endregion
-
 
         Ok(texture)
     }
@@ -212,13 +200,13 @@ impl FontManager {
         // let font = include_bytes!("../../assets/font/plp.otf") as &[u8];
         // let font = fontdue::Font::from_bytes(font, fontdue::FontSettings::default()).unwrap();
 
-        let char_in_row = 14;
+        let char_in_row = 12;
         for (index, character) in RENDER_CHARACTER_ARRAY.iter().enumerate() {
             let uv = [
-                (index % char_in_row) as f32 * 18. * 0.00390625,
-                (index % char_in_row) as f32 * 18. * 0.00390625 + 18. * 0.00390625,
-                (index / char_in_row) as f32 * 29. * 0.00390625 + 0.0001, //magic number.... for floating point precision fixing ???
-                (index / char_in_row) as f32 * 29. * 0.00390625 + 29. * 0.00390625,
+                (index % char_in_row) as f32 * 20. * 0.00390625,
+                (index % char_in_row + 1) as f32 * 20. * 0.00390625 ,
+                (index / char_in_row) as f32 * 32. * 0.00390625,
+                (index / char_in_row + 1) as f32 * 32. * 0.00390625 ,
             ];
 
             self.font_map.insert(character.clone(), uv);
@@ -233,18 +221,19 @@ impl FontManager {
     }
 
     pub fn make_instance_buffer(&self, text: &TextRenderData) -> Vec<InstanceColorTileRaw> {
-        let aspect_ratio = 0.62068965;
+        let line_space = 0.1;
+        let aspect_ratio = 0.625;
         let mut result = Vec::new();
         let mut position = cgmath::Vector3 { x: text.position[0], y: text.position[1], z: text.position[2] };
         let scale_matrix = cgmath::Matrix4::from_nonuniform_scale(text.size[0] * aspect_ratio , text.size[1], 1.0);
 
         for txt in text.content.chars() {
             if txt == ' ' {
-                position.x += text.size[0] * aspect_ratio;
+                position.x += text.size[0] * aspect_ratio + 0.001;
                 continue;
             }
             if txt == '\n' {
-                position.y -= text.size[1];
+                position.y -= text.size[1] + line_space;
                 position.x = text.position[0];
                 continue;
             }

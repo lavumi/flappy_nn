@@ -131,7 +131,7 @@ impl RenderState {
         self.gpu_resource_manager.init_ui_atlas(&self.device, &self.queue);
         self.gpu_resource_manager.init_ui_meshes(&self.device);
 
-        // FontManager::make_font_atlas(&self.device, &self.queue).await.expect("make font atlas fail");
+        FontManager::make_font_atlas(&self.device, &self.queue).await.expect("make font atlas fail");
         self.font_manager.init();
     }
 
