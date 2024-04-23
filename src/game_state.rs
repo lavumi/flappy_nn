@@ -226,7 +226,7 @@ impl GameState {
         if self.stage == Stage::Ready {
             text_render_data.push(
                 TextRenderData {
-                    content: format!("abcjvks1234"),
+                    content: "Press any key to start".to_string(),
                     position: [-3., 1., 1.],
                     size: [0.5, 0.5],
                     color: [0.0, 0.0, 0.0],
