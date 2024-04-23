@@ -1,14 +1,14 @@
 use anyhow::*;
 use image::GenericImageView;
 
-pub struct Texture {
-    pub texture: wgpu::Texture,
+pub struct TextureViewAndSampler {
+    // pub texture: wgpu::Texture,
     pub view: wgpu::TextureView,
     pub sampler: wgpu::Sampler,
 }
 
 
-impl Texture {
+impl TextureViewAndSampler {
     pub const DEPTH_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth32Float;
     pub fn create_depth_texture(device: &wgpu::Device, config: &wgpu::SurfaceConfiguration, label: &str) -> Self {
         let size = wgpu::Extent3d { // 2.
@@ -45,7 +45,7 @@ impl Texture {
             }
         );
 
-        Self { texture, view, sampler }
+        Self {  view, sampler }
     }
 
     #[allow(unused)]
@@ -65,7 +65,6 @@ impl Texture {
         });
 
         Ok(Self {
-            texture,
             view,
             sampler,
         })

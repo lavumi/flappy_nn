@@ -7,8 +7,9 @@ use wgpu::{BindGroup, BindGroupLayout, Buffer, Device, Queue, RenderPass};
 use wgpu::util::DeviceExt;
 
 use crate::renderer::builder::make_tile_mesh;
+use crate::renderer::font_manager::FontManager;
 use crate::renderer::mesh::{InstanceColorTileRaw, InstanceTileRaw, Mesh};
-use crate::renderer::texture::Texture;
+use crate::renderer::texture::TextureViewAndSampler;
 
 pub struct GPUResourceManager {
     bind_group_layouts: HashMap<String, Arc<BindGroupLayout>>,
@@ -38,11 +39,11 @@ impl GPUResourceManager {
     }
 
     pub fn init_atlas(&mut self, device: &Device, queue: &Queue) {
-        let diffuse_texture = Texture::from_bytes(device, queue, include_bytes!("../../assets/img/tile.png"), "tile").unwrap();
+        let diffuse_texture = TextureViewAndSampler::from_bytes(device, queue, include_bytes!("../../assets/img/tile.png"), "tile").unwrap();
         self.make_bind_group("tile", diffuse_texture, device);
-        let diffuse_texture = Texture::from_bytes(device, queue, include_bytes!("../../assets/img/bg.png"), "bg").unwrap();
+        let diffuse_texture = TextureViewAndSampler::from_bytes(device, queue, include_bytes!("../../assets/img/bg.png"), "bg").unwrap();
         self.make_bind_group("bg", diffuse_texture, device);
-        let diffuse_texture = Texture::from_bytes(device, queue, include_bytes!("../../assets/img/player.png"), "player").unwrap();
+        let diffuse_texture = TextureViewAndSampler::from_bytes(device, queue, include_bytes!("../../assets/img/player.png"), "player").unwrap();
         self.make_bind_group("player", diffuse_texture, device);
     }
 
@@ -123,7 +124,7 @@ impl GPUResourceManager {
         self.add_bind_group("camera", 0, camera_bind_group);
     }
 
-    fn make_bind_group<T: Into<String> + Copy>(&mut self, name: T, diffuse_texture: Texture, device: &Device) {
+    fn make_bind_group<T: Into<String> + Copy>(&mut self, name: T, diffuse_texture: TextureViewAndSampler, device: &Device) {
         let texture_bind_group_layout = self.get_bind_group_layout("texture_bind_group_layout").unwrap();
         let diffuse_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             layout: &texture_bind_group_layout,
@@ -322,8 +323,8 @@ impl GPUResourceManager {
 
 
 
-    pub fn init_ui_atlas(&mut self, device: &Device, queue: &Queue) {
-        let diffuse_texture = Texture::from_bytes(device, queue, include_bytes!("../../assets/img/font.png"), "font").unwrap();
+    pub fn init_ui_atlas(&mut self, device: &Device, font_texture : wgpu::Texture) {
+        let diffuse_texture = TextureViewAndSampler::from_wgpu_texture(device, font_texture).unwrap();
         self.make_bind_group("font", diffuse_texture, device);
     }
 

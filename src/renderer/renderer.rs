@@ -27,7 +27,7 @@ pub struct RenderState {
     font_manager: FontManager,
 
     color: wgpu::Color,
-    depth_texture: texture::Texture,
+    depth_texture: texture::TextureViewAndSampler,
 
     aspect_ratio: f32,
     viewport_data: [f32; 6],
@@ -93,7 +93,7 @@ impl RenderState {
         surface.configure(&device, &config);
 
 
-        let depth_texture = texture::Texture::create_depth_texture(&device, &config, "depth_texture");
+        let depth_texture = texture::TextureViewAndSampler::create_depth_texture(&device, &config, "depth_texture");
         let color = wgpu::Color { r: 0.0, g: 0.0, b: 0.0, a: 1.0 };
 
         let aspect_ratio = size.width as f32 / size.height as f32;
@@ -128,11 +128,11 @@ impl RenderState {
         self.gpu_resource_manager.init_meshes(&self.device);
 
 
-        self.gpu_resource_manager.init_ui_atlas(&self.device, &self.queue);
+
         self.gpu_resource_manager.init_ui_meshes(&self.device);
 
-        // FontManager::make_font_atlas(&self.device, &self.queue).await.expect("make font atlas fail");
-        self.font_manager.init();
+        let font_texture = self.font_manager.make_font_atlas_rgba(&self.device, &self.queue).await.unwrap();
+        self.gpu_resource_manager.init_ui_atlas(&self.device,font_texture);
     }
 
     #[allow(dead_code)]
@@ -143,7 +143,7 @@ impl RenderState {
         if new_size.width > 0 && new_size.height > 0 {
             self.config.width = new_size.width;
             self.config.height = new_size.height;
-            self.depth_texture = texture::Texture::create_depth_texture(&self.device, &self.config, "depth_texture");
+            self.depth_texture = texture::TextureViewAndSampler::create_depth_texture(&self.device, &self.config, "depth_texture");
             self.surface.configure(&self.device, &self.config);
 
             let aspect_ratio = new_size.width as f32 / new_size.height as f32;

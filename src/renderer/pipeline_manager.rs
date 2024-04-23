@@ -5,7 +5,7 @@ use crate::renderer::gpu_resource_manager::GPUResourceManager;
 
 
 use crate::renderer::mesh::{InstanceColorTileRaw, InstanceTileRaw};
-use crate::renderer::texture::Texture;
+use crate::renderer::texture::TextureViewAndSampler;
 use crate::renderer::vertex::Vertex;
 
 #[derive(Debug, Hash, Clone)]
@@ -125,7 +125,7 @@ impl PipelineManager {
         let render_pipeline = PipelineDesc{
             primitive_topology: wgpu::PrimitiveTopology::TriangleList,
             depth_stencil: Some(wgpu::DepthStencilState {
-                format: Texture::DEPTH_FORMAT,
+                format: TextureViewAndSampler::DEPTH_FORMAT,
                 depth_write_enabled: true,
                 depth_compare: wgpu::CompareFunction::LessEqual,
                 stencil: wgpu::StencilState::default(),
@@ -149,7 +149,7 @@ impl PipelineManager {
         let render_pipeline = PipelineDesc{
             primitive_topology: wgpu::PrimitiveTopology::TriangleList,
             depth_stencil: Some(wgpu::DepthStencilState {
-                format: Texture::DEPTH_FORMAT,
+                format: TextureViewAndSampler::DEPTH_FORMAT,
                 depth_write_enabled: true,
                 depth_compare: wgpu::CompareFunction::LessEqual,
                 stencil: wgpu::StencilState::default(),
