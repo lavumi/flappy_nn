@@ -4,7 +4,7 @@ pub struct TextRenderData {
     pub content: String,
     pub color : [f32;3],
     pub position: [f32; 3],
-    pub size: [f32; 2],
+    pub size: f32,
 }
 
 pub struct TileRenderData {
