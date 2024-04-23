@@ -34,7 +34,7 @@ impl FontManager {
         let mut max_size = [0, 0];
         let mut font_data = vec![];
         for character in RENDER_CHARACTER_ARRAY {
-            let (metrics, bitmap) = font.rasterize(character, 32.0);
+            let (metrics, bitmap) = font.rasterize_subpixel(character, 32.0);
             // log::info!( "{} : {} : {:?}",character,bitmap.len(), metrics);
             font_data.push((metrics, bitmap));
 
@@ -52,7 +52,7 @@ impl FontManager {
 
         let u8_size = std::mem::size_of::<u8>() as u32;
         let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("font rendering command encoder") });
-        let output_buffer_size = (u8_size * 256 * 256) as wgpu::BufferAddress;
+        let output_buffer_size = (u8_size * 256 * 256 * 4) as wgpu::BufferAddress;
         let output_buffer_desc = wgpu::BufferDescriptor {
             size: output_buffer_size,
             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
@@ -70,6 +70,16 @@ impl FontManager {
             let metrics = font_datum.0;
             let bitmap = &font_datum.1;
 
+
+            let rgb_data = &bitmap;
+            let rgba_data: Vec<u8> = rgb_data
+                .chunks(3)
+                .flat_map(|rgb| {
+                    [rgb[0], rgb[1], rgb[2], 255].into_iter() // 각 RGB 값 뒤에 255를 추가하여 RGBA로 변환
+                })
+                .collect();
+
+
             let size = wgpu::Extent3d {
                 width: metrics.width as u32,
                 height: metrics.height as u32,
@@ -81,7 +91,7 @@ impl FontManager {
                 mip_level_count: 1,
                 sample_count: 1,
                 dimension: wgpu::TextureDimension::D2,
-                format: wgpu::TextureFormat::R8Unorm,
+                format: wgpu::TextureFormat::Rgba8Unorm,
                 usage: wgpu::TextureUsages::COPY_SRC | wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
                 view_formats: &[],
             });
@@ -93,21 +103,21 @@ impl FontManager {
                     origin: wgpu::Origin3d::ZERO,
                     aspect: wgpu::TextureAspect::All,
                 },
-                &bitmap,
+                &rgba_data,
                 wgpu::ImageDataLayout {
                     offset: 0,
-                    bytes_per_row: Some(size.width),
+                    bytes_per_row: Some(size.width * 4),
                     rows_per_image: Some(size.height),
                 },
                 size,
             );
 
-            let offset = (
+            let offset = ((
                 index % char_in_row * max_size[0] 
                 + index / char_in_row * 256 * max_size[1]
                 + metrics.xmin as usize
-                + 256 * (max_size[1] - (metrics.height as i32 + metrics.ymin + 7) as usize) 
-            ) as wgpu::BufferAddress;
+                + 256 * (max_size[1] - (metrics.height as i32 + metrics.ymin + 7) as usize)
+            ) * 4) as wgpu::BufferAddress;
 
             encoder.copy_texture_to_buffer(
                 wgpu::ImageCopyTexture {
@@ -120,7 +130,7 @@ impl FontManager {
                     buffer: &output_buffer,
                     layout: wgpu::ImageDataLayout {
                         offset,
-                        bytes_per_row: Some(256),
+                        bytes_per_row: Some(256 * 4),
                         rows_per_image: Some(256),
                     },
                 },
@@ -141,7 +151,7 @@ impl FontManager {
             mip_level_count: 1,
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::R8Unorm,
+            format: wgpu::TextureFormat::Rgba8Unorm,
             usage: wgpu::TextureUsages::COPY_SRC | wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST | wgpu::TextureUsages::RENDER_ATTACHMENT,
             view_formats: &[],
         });
@@ -175,7 +185,7 @@ impl FontManager {
             let buffer_slice = output_buffer.slice(..);
 
             // NOTE: We have to create the mapping THEN device.poll() before await
-            // the future. Otherwise the application will freeze.
+            // the future. Otherwise, the application will freeze.
             let (tx, rx) = futures_intrusive::channel::shared::oneshot_channel();
             buffer_slice.map_async(wgpu::MapMode::Read, move |result| {
                 tx.send(result).unwrap();
@@ -185,8 +195,8 @@ impl FontManager {
 
             let data = buffer_slice.get_mapped_range();
 
-            use image::{ImageBuffer, Luma};
-            let buffer = ImageBuffer::<Luma<u8>, _>::from_raw(256, 256, data).unwrap();
+            use image::{ImageBuffer, Rgba};
+            let buffer = ImageBuffer::<Rgba<u8>, _>::from_raw(256, 256, data).unwrap();
             buffer.save("image2.png").unwrap();
         }
         output_buffer.unmap();
