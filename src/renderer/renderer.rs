@@ -252,32 +252,32 @@ impl RenderState {
         Ok(())
     }
 
-
-    pub async fn make_font_atlas() {
-        // The instance is a handle to our GPU
-        // BackendBit::PRIMARY => Vulkan + Metal + DX12 + Browser WebGPU
-        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
-            backends: wgpu::Backends::all(),
-            dx12_shader_compiler: Default::default(),
-        });
-
-        let adapter = instance
-            .request_adapter(&RequestAdapterOptions {
-                power_preference: wgpu::PowerPreference::default(),
-                force_fallback_adapter: false,
-                compatible_surface: None,
-            })
-            .await
-            .unwrap();
-
-        let (device, queue) = adapter
-            .request_device(&Default::default(), None)
-            .await
-            .unwrap();
-
-        let mut font_manager = FontManager::default();
-
-        let font_texture = font_manager.make_font_atlas_rgba(&self.device, &self.queue).await.unwrap();
-
-    }
+    //
+    // pub async fn make_font_atlas() {
+    //     // The instance is a handle to our GPU
+    //     // BackendBit::PRIMARY => Vulkan + Metal + DX12 + Browser WebGPU
+    //     let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
+    //         backends: wgpu::Backends::all(),
+    //         dx12_shader_compiler: Default::default(),
+    //     });
+    //
+    //     let adapter = instance
+    //         .request_adapter(&RequestAdapterOptions {
+    //             power_preference: wgpu::PowerPreference::default(),
+    //             force_fallback_adapter: false,
+    //             compatible_surface: None,
+    //         })
+    //         .await
+    //         .unwrap();
+    //
+    //     let (device, queue) = adapter
+    //         .request_device(&Default::default(), None)
+    //         .await
+    //         .unwrap();
+    //
+    //     let mut font_manager = FontManager::default();
+    //
+    //     let font_texture = font_manager.make_font_atlas_rgba(&self.device, &self.queue).await.unwrap();
+    //
+    // }
 }

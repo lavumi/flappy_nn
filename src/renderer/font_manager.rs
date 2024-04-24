@@ -59,13 +59,14 @@ impl FontManager {
 
         let mut size = [0, 0];
         let mut max_y_min = 0;
-        let mut bitmaps = vec![];
-        let mut metrics = vec![];
+        let mut glyphs = vec![];
 
-        for (_, character) in RENDER_CHARACTER_ARRAY_UPPERCASE.iter().enumerate() {
+        for (_, character) in RENDER_CHARACTER_ARRAY.iter().enumerate() {
             let (metrics, bitmap) = font.rasterize_subpixel(*character, font_size);
-            bitmaps.push(bitmap);
-            metrics.push(metrics);
+            glyphs.push(Glyph{
+                bitmap,
+                metrics,
+            });
             // font_data.push((metrics, bitmap));
             size[0] = max(size[0], metrics.width);
             size[1] = max(size[1], metrics.height);
@@ -74,7 +75,7 @@ impl FontManager {
 
         let char_in_row = 256 / size[0];
 
-        for (index, character) in RENDER_CHARACTER_ARRAY_UPPERCASE.iter().enumerate() {
+        for (index, character) in RENDER_CHARACTER_ARRAY.iter().enumerate() {
             let uv = [
                 ((index % char_in_row)* size[0]) as f32  * 0.00390625,
                 ((index % char_in_row)* size[0] + 1) as f32  * 0.00390625 ,
@@ -82,7 +83,7 @@ impl FontManager {
                 ((index / char_in_row)* size[1] + 1) as f32  * 0.00390625,
             ];
 
-            let metrics = metrics[index];
+            let metrics = glyphs[index].metrics;
 
             self.font_map.insert(character.clone(), FontRenderData{
                 uv,
@@ -91,8 +92,7 @@ impl FontManager {
         }
 
         return RasterizedFont{
-            bitmaps,
-            metrics,
+            glyphs,
             size,
             max_y_min,
         };
@@ -101,6 +101,7 @@ impl FontManager {
     #[allow(unused)]
     pub async fn make_font_atlas_rgba(&mut self, device: &wgpu::Device, queue: &wgpu::Queue) -> Result<wgpu::Texture, wgpu::SurfaceError> {
         let rasterized_font = self.font_rasterize(24.0);
+
 
         let max_size = rasterized_font.size;
 
@@ -117,9 +118,9 @@ impl FontManager {
 
 
         let char_in_row = 256 / max_size[0];
-        for (index, font_datum) in font_data.iter().enumerate() {
-            let metrics = font_datum.0;
-            let bitmap = &font_datum.1;
+        for (index, font_datum) in rasterized_font.glyphs.iter().enumerate() {
+            let metrics = font_datum.metrics;
+            let bitmap = &font_datum.bitmap;
 
 
             let rgb_data = &bitmap;
@@ -167,7 +168,7 @@ impl FontManager {
                 index % char_in_row * max_size[0] 
                 + index / char_in_row * 256 * max_size[1]
                 + metrics.xmin as usize
-                + 256 * (max_size[1] - (metrics.height as i32 + metrics.ymin - max_ymin) as usize)
+                + 256 * (max_size[1] - (metrics.height as i32 + metrics.ymin - rasterized_font.max_y_min) as usize)
             ) * 4) as wgpu::BufferAddress;
 
             encoder.copy_texture_to_buffer(
@@ -251,6 +252,7 @@ impl FontManager {
                 continue;
             }
 
+            // let uppercase = txt.to_ascii_uppercase();
             let render_data = self.get_render_data(txt);
             let uv = render_data.uv;
             let color = text.color;
