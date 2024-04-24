@@ -1,5 +1,6 @@
 use std::cmp::{max, min};
 use std::collections::HashMap;
+use fontdue::Metrics;
 use crate::renderer::mesh::{InstanceColorTileRaw};
 use crate::renderer::TextRenderData;
 
@@ -9,6 +10,25 @@ const RENDER_CHARACTER_ARRAY: [char; 64] = [
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':' , '.',
 ];
+
+const RENDER_CHARACTER_ARRAY_UPPERCASE: [char; 38] = [
+    // 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':' , '.',
+];
+
+
+struct Glyph {
+    bitmap: Vec<u8>,
+    metrics: Metrics,
+}
+
+
+struct RasterizedFont {
+    glyphs: Vec<Glyph>,
+    size : [usize;2],
+    max_y_min : i32
+}
 
 
 struct FontRenderData {
@@ -32,45 +52,57 @@ impl Default for FontManager {
 
 
 impl FontManager {
-    #[allow(unused)]
-    pub async fn make_font_atlas_rgba(&mut self, device: &wgpu::Device, queue: &wgpu::Queue) -> Result<wgpu::Texture, wgpu::SurfaceError> {
+
+    pub fn font_rasterize(&mut self, font_size : f32) -> RasterizedFont {
         let font = include_bytes!("../../assets/font/Gameplay.ttf") as &[u8];
         let font = fontdue::Font::from_bytes(font, fontdue::FontSettings::default()).unwrap();
 
-        let mut max_size = [0, 0];
-        let mut max_ymin = 0;
-        let mut font_data = vec![];
+        let mut size = [0, 0];
+        let mut max_y_min = 0;
+        let mut bitmaps = vec![];
+        let mut metrics = vec![];
 
+        for (_, character) in RENDER_CHARACTER_ARRAY_UPPERCASE.iter().enumerate() {
+            let (metrics, bitmap) = font.rasterize_subpixel(*character, font_size);
+            bitmaps.push(bitmap);
+            metrics.push(metrics);
+            // font_data.push((metrics, bitmap));
+            size[0] = max(size[0], metrics.width);
+            size[1] = max(size[1], metrics.height);
+            max_y_min = min(max_y_min, metrics.ymin);
+        }
 
-        //todo 이거 어떻게 자동으로 세팅하게 할 수 없나?
-        //어쩔 수 없이 2번 읽어서 한번은 멕스값 찾고 다음번에 데이터 읽게 만들어야 하는건가...
-        let size = [20.,26.];
-        let char_in_row = 12;
+        let char_in_row = 256 / size[0];
 
-
-        for (index, character) in RENDER_CHARACTER_ARRAY.iter().enumerate() {
-            let (metrics, bitmap) = font.rasterize_subpixel(*character, 24.0);
-            // log::info!( "{} : {} : {:?}",character,bitmap.len(), metrics);
-            font_data.push((metrics, bitmap));
-            max_size[0] = max(max_size[0], metrics.width);
-            max_size[1] = max(max_size[1], metrics.height);
-            max_ymin = min(max_ymin , metrics.ymin);
-
-
+        for (index, character) in RENDER_CHARACTER_ARRAY_UPPERCASE.iter().enumerate() {
             let uv = [
-                (index % char_in_row) as f32 * size[0] * 0.00390625,
-                (index % char_in_row) as f32 * size[0] * 0.00390625 + size[0]* 0.00390625 ,
-                (index / char_in_row) as f32 * size[1] * 0.00390625,
-                (index / char_in_row) as f32 * size[1] * 0.00390625 + size[1]* 0.00390625 ,
+                ((index % char_in_row)* size[0]) as f32  * 0.00390625,
+                ((index % char_in_row)* size[0] + 1) as f32  * 0.00390625 ,
+                ((index / char_in_row)* size[1]) as f32  * 0.00390625,
+                ((index / char_in_row)* size[1] + 1) as f32  * 0.00390625,
             ];
+
+            let metrics = metrics[index];
 
             self.font_map.insert(character.clone(), FontRenderData{
                 uv,
-                width : metrics.width as f32 / size[0]
+                width : metrics.width as f32 / size[0] as f32
             });
         }
 
+        return RasterizedFont{
+            bitmaps,
+            metrics,
+            size,
+            max_y_min,
+        };
+    }
 
+    #[allow(unused)]
+    pub async fn make_font_atlas_rgba(&mut self, device: &wgpu::Device, queue: &wgpu::Queue) -> Result<wgpu::Texture, wgpu::SurfaceError> {
+        let rasterized_font = self.font_rasterize(24.0);
+
+        let max_size = rasterized_font.size;
 
         let u8_size = std::mem::size_of::<u8>() as u32;
         let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("font rendering command encoder") });
@@ -196,35 +228,6 @@ impl FontManager {
 
         Ok(texture)
     }
-    // pub fn init(&mut self) {
-    //     let font = include_bytes!("../../assets/font/Gameplay.ttf") as &[u8];
-    //     let font = fontdue::Font::from_bytes(font, fontdue::FontSettings::default()).unwrap();
-    //
-    //     // let mut font_data = vec![];
-    //     let size = [20.,26.];
-    //     let char_in_row = 12;
-    //     for (index, character) in RENDER_CHARACTER_ARRAY.iter().enumerate() {
-    //         let (metrics, _) = font.rasterize(*character, 24.0);
-    //         // log::info!( "{} : {} : {:?}",character,bitmap.len(), metrics);
-    //         // font_data.push((metrics, bitmap));
-    //
-    //         let uv = [
-    //             (index % char_in_row) as f32 * size[0] * 0.00390625,
-    //             (index % char_in_row) as f32 * size[0] * 0.00390625 + size[0]* 0.00390625 ,
-    //             (index / char_in_row) as f32 * size[1] * 0.00390625,
-    //             (index / char_in_row) as f32 * size[1] * 0.00390625 + size[1]* 0.00390625 ,
-    //         ];
-    //
-    //
-    //         log::info!("{} {:?}", character, metrics);
-    //         self.font_map.insert(character.clone(), FontRenderData{
-    //             uv,
-    //             width : metrics.width as f32 / size[0]
-    //             // size : [metrics.width as f32, metrics.height as f32],
-    //             // offset : [metrics.xmin as f32 / size[0] , metrics.ymin as f32 / size[1]]
-    //         });
-    //     }
-    // }
 
     pub fn get_render_data(&self, char_key: char) -> &FontRenderData {
         match self.font_map.get(&char_key) {
