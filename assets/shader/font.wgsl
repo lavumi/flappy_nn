@@ -61,7 +61,7 @@ var s_diffuse: sampler;
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     let texture = textureSample(t_diffuse, s_diffuse, in.tex_coords);
     let average_intensity = texture.r * 0.299 + texture.g * 0.587 + texture.b * 0.114;
-
-    return vec4(texture.rgb, average_intensity);
-//    return vec4( 1.0 - texture.r, 1.0 - texture.g, 1.0 - texture.b , texture.r);
+    let font_color = vec3( 1.0 - texture.r , 1.0 - texture.g, 1.0 - texture.b) + in.color;
+//    return vec4(texture.rgb, average_intensity);
+    return vec4( font_color , average_intensity);
 }

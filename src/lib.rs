@@ -2,6 +2,7 @@
 use wasm_bindgen::prelude::*;
 
 use crate::application::Application;
+use crate::renderer::RenderState;
 use crate::winit_state::WinitState;
 
 mod renderer;
@@ -57,6 +58,11 @@ pub async fn start(){
 
 
 
+}
+
+
+pub async fn make_font_atlas(){
+    RenderState::make_font_atlas().await
 }
 
 

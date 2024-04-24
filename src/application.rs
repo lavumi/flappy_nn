@@ -175,8 +175,8 @@ impl Application {
 
 
         // //2. update meshes
-        // let instances = self.gs.get_tile_instance();
-        // self.rs.update_mesh_instance(instances);
+        let instances = self.gs.get_tile_instance();
+        self.rs.update_mesh_instance(instances);
 
 
         let instances = self.gs.set_score_text();

@@ -11,10 +11,6 @@ use crate::renderer::render_input_data::*;
 use crate::renderer::texture;
 
 
-
-
-
-
 pub struct RenderState {
     pub device: wgpu::Device,
     surface: wgpu::Surface,
@@ -252,32 +248,62 @@ impl RenderState {
         Ok(())
     }
 
-    //
-    // pub async fn make_font_atlas() {
-    //     // The instance is a handle to our GPU
-    //     // BackendBit::PRIMARY => Vulkan + Metal + DX12 + Browser WebGPU
-    //     let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
-    //         backends: wgpu::Backends::all(),
-    //         dx12_shader_compiler: Default::default(),
-    //     });
-    //
-    //     let adapter = instance
-    //         .request_adapter(&RequestAdapterOptions {
-    //             power_preference: wgpu::PowerPreference::default(),
-    //             force_fallback_adapter: false,
-    //             compatible_surface: None,
-    //         })
-    //         .await
-    //         .unwrap();
-    //
-    //     let (device, queue) = adapter
-    //         .request_device(&Default::default(), None)
-    //         .await
-    //         .unwrap();
-    //
-    //     let mut font_manager = FontManager::default();
-    //
-    //     let font_texture = font_manager.make_font_atlas_rgba(&self.device, &self.queue).await.unwrap();
-    //
-    // }
+
+    pub async fn make_font_atlas() {
+        // The instance is a handle to our GPU
+        // BackendBit::PRIMARY => Vulkan + Metal + DX12 + Browser WebGPU
+        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
+            backends: wgpu::Backends::all(),
+            dx12_shader_compiler: Default::default(),
+        });
+
+        let adapter = instance
+            .request_adapter(&RequestAdapterOptions {
+                power_preference: wgpu::PowerPreference::default(),
+                force_fallback_adapter: false,
+                compatible_surface: None,
+            })
+            .await
+            .unwrap();
+
+        let (device, queue) = adapter
+            .request_device(&Default::default(), None)
+            .await
+            .unwrap();
+
+        let mut font_manager = FontManager::default();
+
+        let rasterized_font = font_manager.font_rasterize(24.0);
+        let u8_size = std::mem::size_of::<u8>() as u32;
+        let output_buffer_size = (u8_size * 256 * 256 * 4) as wgpu::BufferAddress;
+        let output_buffer_desc = wgpu::BufferDescriptor {
+            size: output_buffer_size,
+            usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST,
+            label: Some("font atlas buffer"),
+            mapped_at_creation: false,
+        };
+        let output_buffer = device.create_buffer(&output_buffer_desc);
+        let output_buffer = font_manager.make_font_butter(rasterized_font,output_buffer, &device, &queue).unwrap();
+
+        {
+            let buffer_slice = output_buffer.slice(..);
+
+            // NOTE: We have to create the mapping THEN device.poll() before await
+            // the future. Otherwise, the application will freeze.
+            let (tx, rx) = futures_intrusive::channel::shared::oneshot_channel();
+            buffer_slice.map_async(wgpu::MapMode::Read, move |result| {
+                tx.send(result).unwrap();
+            });
+            device.poll(wgpu::Maintain::Wait);
+            rx.receive().await.unwrap().unwrap();
+
+            let data = buffer_slice.get_mapped_range();
+
+            use image::{ImageBuffer, Rgba};
+            let buffer = ImageBuffer::<Rgba<u8>, _>::from_raw(256, 256, data).unwrap();
+            buffer.save("image2.png").unwrap();
+        }
+        output_buffer.unmap();
+
+    }
 }

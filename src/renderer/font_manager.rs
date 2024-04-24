@@ -24,7 +24,7 @@ struct Glyph {
 }
 
 
-struct RasterizedFont {
+pub struct RasterizedFont {
     glyphs: Vec<Glyph>,
     size : [usize;2],
     max_y_min : i32
@@ -77,10 +77,10 @@ impl FontManager {
 
         for (index, character) in RENDER_CHARACTER_ARRAY.iter().enumerate() {
             let uv = [
-                ((index % char_in_row)* size[0]) as f32  * 0.00390625,
-                ((index % char_in_row)* size[0] + 1) as f32  * 0.00390625 ,
-                ((index / char_in_row)* size[1]) as f32  * 0.00390625,
-                ((index / char_in_row)* size[1] + 1) as f32  * 0.00390625,
+                (index % char_in_row) as f32 * size[0] as f32* 0.00390625,
+                (index % char_in_row + 1) as f32 * size[0] as f32 * 0.00390625,
+                (index / char_in_row) as f32 * size[1] as f32 * 0.00390625,
+                (index / char_in_row + 1) as f32 * size[1] as f32 * 0.00390625,
             ];
 
             let metrics = glyphs[index].metrics;
@@ -98,23 +98,12 @@ impl FontManager {
         };
     }
 
-    #[allow(unused)]
-    pub async fn make_font_atlas_rgba(&mut self, device: &wgpu::Device, queue: &wgpu::Queue) -> Result<wgpu::Texture, wgpu::SurfaceError> {
-        let rasterized_font = self.font_rasterize(24.0);
-
-
+    pub fn make_font_butter(&mut self, rasterized_font: RasterizedFont , output_buffer : wgpu::Buffer, device: &wgpu::Device, queue: &wgpu::Queue) -> Result<wgpu::Buffer, wgpu::SurfaceError> {
+        //
         let max_size = rasterized_font.size;
 
-        let u8_size = std::mem::size_of::<u8>() as u32;
-        let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("font rendering command encoder") });
-        let output_buffer_size = (u8_size * 256 * 256 * 4) as wgpu::BufferAddress;
-        let output_buffer_desc = wgpu::BufferDescriptor {
-            size: output_buffer_size,
-            usage: wgpu::BufferUsages::COPY_SRC | wgpu::BufferUsages::COPY_DST,
-            label: Some("font atlas buffer"),
-            mapped_at_creation: false,
-        };
-        let output_buffer = device.create_buffer(&output_buffer_desc);
+        let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("font buffer command encoder") });
+
 
 
         let char_in_row = 256 / max_size[0];
@@ -165,10 +154,10 @@ impl FontManager {
             );
 
             let offset = ((
-                index % char_in_row * max_size[0] 
-                + index / char_in_row * 256 * max_size[1]
-                + metrics.xmin as usize
-                + 256 * (max_size[1] - (metrics.height as i32 + metrics.ymin - rasterized_font.max_y_min) as usize)
+                index % char_in_row * max_size[0]
+                    + index / char_in_row * 256 * max_size[1]
+                    + metrics.xmin as usize
+                    + 256 * (max_size[1] - (metrics.height as i32 + metrics.ymin - rasterized_font.max_y_min) as usize)
             ) * 4) as wgpu::BufferAddress;
 
             encoder.copy_texture_to_buffer(
@@ -189,7 +178,25 @@ impl FontManager {
                 size,
             );
         }
+        queue.submit(Some(encoder.finish()));
+        return Ok(output_buffer);
+    }
+    #[allow(unused)]
+    pub async fn make_font_atlas_rgba(&mut self, device: &wgpu::Device, queue: &wgpu::Queue) -> Result<wgpu::Texture, wgpu::SurfaceError> {
+        let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("font atlasing command encoder") });
+        let rasterized_font = self.font_rasterize(24.0);
 
+
+        let u8_size = std::mem::size_of::<u8>() as u32;
+        let output_buffer_size = (u8_size * 256 * 256 * 4) as wgpu::BufferAddress;
+        let output_buffer_desc = wgpu::BufferDescriptor {
+            size: output_buffer_size,
+            usage: wgpu::BufferUsages::COPY_SRC | wgpu::BufferUsages::COPY_DST,
+            label: Some("font atlas buffer"),
+            mapped_at_creation: false,
+        };
+        let output_buffer = device.create_buffer(&output_buffer_desc);
+        let output_buffer = self.make_font_butter(rasterized_font, output_buffer, device, queue).unwrap();
 
         //region [ Make Font Atlas Texture ]
         let size = wgpu::Extent3d {
