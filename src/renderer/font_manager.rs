@@ -259,6 +259,7 @@ impl FontManager {
                 continue;
             }
 
+
             // let uppercase = txt.to_ascii_uppercase();
             let render_data = self.get_render_data(txt);
             let uv = render_data.uv;

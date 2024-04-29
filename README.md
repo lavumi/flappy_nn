@@ -7,6 +7,6 @@ by neural network and generic algorithm
 
 
 ### WASM Build
-```
+```bash
 wasm-pack build --target web
 ```

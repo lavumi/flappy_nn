@@ -216,7 +216,7 @@ impl GameState {
         let players =  self.world.read_storage::<Player>().join().count();
         let mut text_render_data = vec![
             TextRenderData {
-                content: format!("Generation:{}\nScore:{:.3}\nSurvive:{}", gene_handler.generation, score.0, players),
+                content: format!("GENERATION :{}\nSCORE : {:.2}\nSURVIVE : {}", gene_handler.generation, score.0, players),
                 position: [-4.5, 8.5, 1.],
                 size: 0.5,
                 color: [0.0, 0.0, 0.0],
@@ -226,7 +226,7 @@ impl GameState {
         if self.stage == Stage::Ready {
             text_render_data.push(
                 TextRenderData {
-                    content: "Press any key to start".to_string(),
+                    content: "PRESS ANY KEY TO START".to_string(),
                     position: [-3.2, 1., 1.],
                     size: 0.5,
                     color: [0.0, 0.0, 0.0],

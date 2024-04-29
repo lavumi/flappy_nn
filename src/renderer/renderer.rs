@@ -301,7 +301,7 @@ impl RenderState {
 
             use image::{ImageBuffer, Rgba};
             let buffer = ImageBuffer::<Rgba<u8>, _>::from_raw(256, 256, data).unwrap();
-            buffer.save("image2.png").unwrap();
+            buffer.save("assets/img/font.png").unwrap();
         }
         output_buffer.unmap();
 
