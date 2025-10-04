@@ -2,13 +2,16 @@ use instant::Instant;
 use wgpu::SurfaceError;
 use winit::{
     event::*,
-    event_loop::{ControlFlow, EventLoop},
+    event_loop::EventLoop,
     window::Window,
     application::ApplicationHandler,
 };
 use winit::dpi::{PhysicalPosition, PhysicalSize};
 use crate::game_configs::GENE_SIZE;
 use std::sync::Arc;
+
+#[cfg(target_arch = "wasm32")]
+use crate::wasm_bindings::render;
 
 
 use crate::game_state::GameState;
@@ -70,6 +73,14 @@ impl ApplicationHandler<()> for Application {
                             Err(SurfaceError::Timeout) => log::warn!("Surface timeout"),
                             Err(SurfaceError::Other) => log::warn!("Surface error: other"),
                         }
+                        
+                        #[cfg(target_arch = "wasm32")]
+                        {
+                            let arr = self.get_gene_data();
+                            let str1 = format!("{:?}", arr.0);
+                            let str2 = format!("{:?}", arr.1);
+                            render(&str1, &str2);
+                        }
                     }
                     _ => {}
                 }
@@ -104,7 +115,10 @@ impl Application {
         }
 
 
-        let size = window.inner_size();
+        let size = winit::dpi::PhysicalSize::new(
+            crate::game_configs::SCREEN_SIZE[0], 
+            crate::game_configs::SCREEN_SIZE[1]
+        );
         let prev_mouse_position = PhysicalPosition::new(0.0, 0.0);
         let prev_time = Instant::now();
 

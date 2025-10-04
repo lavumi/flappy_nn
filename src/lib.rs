@@ -13,7 +13,9 @@ mod system;
 mod game_state;
 mod builder;
 mod game_configs;
-mod utils;
+
+#[cfg(target_arch = "wasm32")]
+mod wasm_bindings;
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
 pub async fn start(){
@@ -25,17 +27,6 @@ pub async fn start(){
         if #[cfg(target_arch = "wasm32")] {
             std::panic::set_hook(Box::new(console_error_panic_hook::hook));
             console_log::init_with_level(log::Level::Warn).expect("Couldn't initialize logger");
-
-            #[wasm_bindgen(module = "/defined-in-js.js")]
-            extern "C" {
-                fn render(gene : &str,pos : &str);
-            }
-
-            #[wasm_bindgen]
-            extern "C" {
-                #[wasm_bindgen(js_namespace = console)]
-                fn log(s: &str);
-            }
         } else {
             env_logger::init();
         }
@@ -50,24 +41,3 @@ pub async fn start(){
 
 }
 
-
-// #[cfg(target_arch = "wasm32")]
-// fn main() {
-//     use wasm_bindgen::prelude::*;
-//
-//
-//
-//     // lifted from the `console_log` example
-//
-//
-//     #[wasm_bindgen(start)]
-//     pub fn run() {
-//         log(&format!("Hello from {}!", name())); // should output "Hello from Rust!"
-//
-//         let x = MyClass::new();
-//         assert_eq!(x.number(), 42);
-//         x.set_number(10);
-//         log(&x.render());
-//     }
-//
-// }

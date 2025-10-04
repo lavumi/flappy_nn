@@ -35,7 +35,9 @@ pub struct RenderState {
 }
 impl RenderState {
     pub async fn new(window: Arc<Window>) -> Self {
-        let size = window.inner_size();
+        // Use game config size instead of window inner_size to avoid WASM initialization issues
+        let width = crate::game_configs::SCREEN_SIZE[0];
+        let height = crate::game_configs::SCREEN_SIZE[1];
 
         // The instance is a handle to our GPU
         // BackendBit::PRIMARY => Vulkan + Metal + DX12 + Browser WebGPU
@@ -82,8 +84,8 @@ impl RenderState {
         let config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: surface_format,
-            width: size.width,
-            height: size.height,
+            width,
+            height,
             present_mode: surface_caps.present_modes[0],
             desired_maximum_frame_latency: 2,
             alpha_mode: surface_caps.alpha_modes[0],
@@ -95,8 +97,8 @@ impl RenderState {
         let depth_texture = texture::Texture::create_depth_texture(&device, &config, "depth_texture");
         let color = wgpu::Color { r: 0.0, g: 0.0, b: 0.0, a: 1.0 };
 
-        let aspect_ratio = size.width as f32 / size.height as f32;
-        let viewport_data = [0., 0., size.width as f32, size.height as f32, 0., 1.];
+        let aspect_ratio = width as f32 / height as f32;
+        let viewport_data = [0., 0., width as f32, height as f32, 0., 1.];
 
         let mut gpu_resource_manager = GPUResourceManager::default();
         gpu_resource_manager.initialize(&device);

@@ -1,5 +1,5 @@
 use winit::{
-    dpi::LogicalSize,
+    dpi::{LogicalSize, PhysicalSize},
     event_loop::EventLoop,
     window::Window,
 };
@@ -20,11 +20,17 @@ impl WinitState {
         width : u32,height:u32,
     ) -> (winit::window::WindowAttributes, EventLoop<()>) {
         let events_loop = EventLoop::new().unwrap();
-        (
-            Window::default_attributes()
-                .with_title(title)
-                .with_inner_size(LogicalSize::new(width,height)),
-            events_loop,
-        )
+        
+        #[cfg(target_arch = "wasm32")]
+        let window_attributes = Window::default_attributes()
+            .with_title(title)
+            .with_inner_size(PhysicalSize::new(width, height));
+            
+        #[cfg(not(target_arch = "wasm32"))]
+        let window_attributes = Window::default_attributes()
+            .with_title(title)
+            .with_inner_size(LogicalSize::new(width, height));
+        
+        (window_attributes, events_loop)
     }
 }
