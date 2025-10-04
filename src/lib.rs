@@ -44,16 +44,7 @@ pub async fn start(){
     let (wb, event_loop) = WinitState::create(title, width, height );
     // let asset_path = concat!(env!("CARGO_MANIFEST_DIR"), "/assets/").to_string();
     let mut application = Application::new(wb, &event_loop).await;
-    event_loop.run(move |event, _,control_flow| {
-        application.run(&event, control_flow);
-        #[cfg(target_arch = "wasm32")]
-        {
-            let arr = application.get_gene_data();
-            let str1 = format!("{:?}", arr.0);
-            let str2 = format!("{:?}", arr.1);
-            render(&str1 , &str2);
-        }
-    });
+    event_loop.run_app(&mut application).unwrap();
 
 
 

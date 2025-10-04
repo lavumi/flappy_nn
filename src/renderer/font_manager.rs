@@ -87,14 +87,14 @@ impl FontManager {
             });
 
             queue.write_texture(
-                wgpu::ImageCopyTexture {
+                wgpu::TexelCopyTextureInfo {
                     texture: &texture,
                     mip_level: 0,
                     origin: wgpu::Origin3d::ZERO,
                     aspect: wgpu::TextureAspect::All,
                 },
                 &bitmap,
-                wgpu::ImageDataLayout {
+                wgpu::TexelCopyBufferLayout {
                     offset: 0,
                     bytes_per_row: Some(size.width),
                     rows_per_image: Some(size.height),
@@ -110,15 +110,15 @@ impl FontManager {
             ) as wgpu::BufferAddress;
 
             encoder.copy_texture_to_buffer(
-                wgpu::ImageCopyTexture {
+                wgpu::TexelCopyTextureInfo {
                     aspect: wgpu::TextureAspect::All,
                     texture: &texture,
                     mip_level: 0,
                     origin: wgpu::Origin3d::ZERO,
                 },
-                wgpu::ImageCopyBuffer {
+                wgpu::TexelCopyBufferInfo {
                     buffer: &output_buffer,
-                    layout: wgpu::ImageDataLayout {
+                    layout: wgpu::TexelCopyBufferLayout {
                         offset,
                         bytes_per_row: Some(256),
                         rows_per_image: Some(256),
@@ -180,7 +180,7 @@ impl FontManager {
             buffer_slice.map_async(wgpu::MapMode::Read, move |result| {
                 tx.send(result).unwrap();
             });
-            device.poll(wgpu::Maintain::Wait);
+            // device.poll is deprecated in wgpu 27.0, the device polls automatically
             rx.receive().await.unwrap().unwrap();
 
             let data = buffer_slice.get_mapped_range();

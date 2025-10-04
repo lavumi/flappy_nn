@@ -1,4 +1,5 @@
-use winit::event::{ElementState, VirtualKeyCode};
+use winit::event::ElementState;
+use winit::keyboard::{KeyCode, PhysicalKey};
 
 pub struct InputHandler{
     pub jump: bool,
@@ -15,9 +16,9 @@ impl Default for InputHandler {
 
 
 impl InputHandler {
-    pub fn receive_keyboard_input(&mut self, state : ElementState, virtual_keycode: VirtualKeyCode) -> bool {
-        match virtual_keycode {
-            VirtualKeyCode::Space => {
+    pub fn receive_keyboard_input(&mut self, state : ElementState, physical_key: PhysicalKey) -> bool {
+        match physical_key {
+            PhysicalKey::Code(KeyCode::Space) => {
                 match state {
                     ElementState::Pressed => {
                         self.jump = true;

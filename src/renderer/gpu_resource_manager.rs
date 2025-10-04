@@ -175,7 +175,7 @@ impl GPUResourceManager {
         let bind_groups = self.bind_groups.get(&key).unwrap();
 
         for (key, val) in bind_groups.iter() {
-            render_pass.set_bind_group(*key, val, &[]);
+            render_pass.set_bind_group(*key, Some(val.as_ref()), &[]);
         }
     }
 

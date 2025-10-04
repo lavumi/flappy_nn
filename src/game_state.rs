@@ -2,8 +2,9 @@ use std::collections::HashMap;
 
 use rand::rngs::ThreadRng;
 use specs::{Join, World, WorldExt};
-use winit::event::{ElementState, VirtualKeyCode};
-use crate::builder::{background, pipe, ai_player, player};
+use winit::event::ElementState;
+use winit::keyboard::{KeyCode, PhysicalKey};
+use crate::builder::{background, pipe, ai_player};
 
 use crate::components::*;
 use crate::game_configs::GENE_SIZE;
@@ -121,39 +122,39 @@ impl GameState {
         self.world.maintain();
     }
 
-    pub fn handle_keyboard_input(&mut self, input: &winit::event::KeyboardInput) -> bool {
+    pub fn handle_keyboard_input(&mut self, physical_key: PhysicalKey, state: ElementState) -> bool {
         match self.stage {
             Stage::End => {
-                if input.virtual_keycode.is_none() == false && input.state == ElementState::Released {
+                if state == ElementState::Released {
                     self.init_game();
                 }
                 return true;
             }
             Stage::Ready | Stage::Pause => {
-                if input.virtual_keycode.is_none() == false && input.state == ElementState::Released {
+                if state == ElementState::Released {
                     self.stage = Stage::Run;
                 }
                 return true;
             }
             Stage::Run => {
-                match input.virtual_keycode {
-                    Some(code) if code == VirtualKeyCode::P => {
-                        if input.state == ElementState::Released {
+                match physical_key {
+                    PhysicalKey::Code(KeyCode::KeyP) => {
+                        if state == ElementState::Released {
                             self.stage = Stage::Pause;
                         }
                         return true;
                     }
-                    Some(code) if code == VirtualKeyCode::R => {
-                        if input.state == ElementState::Released {
+                    PhysicalKey::Code(KeyCode::KeyR) => {
+                        if state == ElementState::Released {
                             self.force_restart();
                         }
                         return true;
                     }
-                    Some(_) => {
+                    PhysicalKey::Code(_) => {
                         let mut input_handler = self.world.write_resource::<InputHandler>();
-                        input_handler.receive_keyboard_input(input.state, input.virtual_keycode.unwrap())
+                        input_handler.receive_keyboard_input(state, physical_key)
                     }
-                    None => {
+                    _ => {
                         return false;
                     }
                 }

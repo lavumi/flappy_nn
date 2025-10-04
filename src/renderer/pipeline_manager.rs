@@ -65,17 +65,19 @@ impl PipelineDesc<'_> {
             layout: Some(&render_pipeline_layout),
             vertex: wgpu::VertexState {
                 module: &shader,
-                entry_point: "vs_main",
+                entry_point: Some("vs_main"),
                 buffers : self.buffers,
+                compilation_options: wgpu::PipelineCompilationOptions::default(),
             },
             fragment: Some(wgpu::FragmentState {
                 module: &shader,
-                entry_point: "fs_main",
+                entry_point: Some("fs_main"),
                 targets: &[Some(wgpu::ColorTargetState {
                     format: default_format,
                     blend: Some(wgpu::BlendState::ALPHA_BLENDING),
                     write_mask: wgpu::ColorWrites::ALL,
                 })],
+                compilation_options: wgpu::PipelineCompilationOptions::default(),
             }),
             primitive: wgpu::PrimitiveState {
                 topology: self.primitive_topology,
@@ -95,6 +97,7 @@ impl PipelineDesc<'_> {
                 mask: !self.sampler_mask, // 3.
                 alpha_to_coverage_enabled: self.alpha_to_coverage_enabled, // 4.
             },
+            cache: None,
 
             multiview: None,
         });

@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::iter;
+use std::sync::Arc;
 
 use winit::window::Window;
 
@@ -16,7 +17,7 @@ use crate::renderer::texture;
 
 pub struct RenderState {
     pub device: wgpu::Device,
-    surface: wgpu::Surface,
+    surface: wgpu::Surface<'static>,
 
     pub queue: wgpu::Queue,
     pub config: wgpu::SurfaceConfiguration,
@@ -33,21 +34,18 @@ pub struct RenderState {
     viewport_data: [f32; 6],
 }
 impl RenderState {
-    pub async fn new(window: &Window) -> Self {
+    pub async fn new(window: Arc<Window>) -> Self {
         let size = window.inner_size();
 
         // The instance is a handle to our GPU
         // BackendBit::PRIMARY => Vulkan + Metal + DX12 + Browser WebGPU
-        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
-            backends: wgpu::Backends::all(),
-            dx12_shader_compiler: Default::default(),
-        });
+        let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor::default());
 
 
         // # Safety
         // The surface needs to live as long as the window that created it.
         // State owns the window so this should be safe.
-        let surface = unsafe { instance.create_surface(&window) }.unwrap();
+        let surface = instance.create_surface(window).unwrap();
         let adapter = instance
                 .request_adapter(&wgpu::RequestAdapterOptions {
                     power_preference: wgpu::PowerPreference::default(),
@@ -60,17 +58,18 @@ impl RenderState {
                 .request_device(
                     &wgpu::DeviceDescriptor {
                         label: None,
-                        features: wgpu::Features::empty(),
+                        required_features: wgpu::Features::empty(),
                         // WebGL doesn't support all of wgpu`s features, so if
                         // we're building for the web we'll have to disable some.
-                        limits: if cfg!(target_arch = "wasm32") {
+                        required_limits: if cfg!(target_arch = "wasm32") {
                             wgpu::Limits::downlevel_webgl2_defaults()
                         } else {
                             wgpu::Limits::default()
                         },
+                        experimental_features: wgpu::ExperimentalFeatures::disabled(),
+                        memory_hints: wgpu::MemoryHints::default(),
+                        trace: wgpu::Trace::Off,
                     },
-                    // Some(&std::path::Path::new("trace")), // Trace path
-                    None,
                 )
                 .await
                 .unwrap();
@@ -78,8 +77,7 @@ impl RenderState {
         let surface_caps = surface.get_capabilities(&adapter);
         let surface_format = surface_caps.formats.iter()
                 .copied()
-                // .filter(|f| f.describe().srgb)
-                .next()
+                .find(|f| matches!(f, wgpu::TextureFormat::Rgba8UnormSrgb | wgpu::TextureFormat::Bgra8UnormSrgb))
                 .unwrap_or(surface_caps.formats[0]);
         let config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
@@ -87,6 +85,7 @@ impl RenderState {
             width: size.width,
             height: size.height,
             present_mode: surface_caps.present_modes[0],
+            desired_maximum_frame_latency: 2,
             alpha_mode: surface_caps.alpha_modes[0],
             view_formats: vec![],
         };
@@ -215,17 +214,20 @@ impl RenderState {
                     resolve_target: None,
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Clear(self.color),
-                        store: true,
+                        store: wgpu::StoreOp::Store,
                     },
+                    depth_slice: None,
                 })],
                 depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
                     view: &self.depth_texture.view,
                     depth_ops: Some(wgpu::Operations {
                         load: wgpu::LoadOp::Clear(1.0),
-                        store: true,
+                        store: wgpu::StoreOp::Store,
                     }),
                     stencil_ops: None,
                 }),
+                occlusion_query_set: None,
+                timestamp_writes: None,
             });
 
             render_pass.set_viewport(self.viewport_data[0],
