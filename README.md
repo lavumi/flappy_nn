@@ -1,4 +1,4 @@
-# Flappy NN - Rust Game Engine
+# Pixie - Rust Game Engine
 
 A lightweight 2D game engine built with Rust and WebGPU, featuring an ECS architecture and cross-platform support.
 
@@ -26,8 +26,8 @@ A lightweight 2D game engine built with Rust and WebGPU, featuring an ECS archit
 
 ### Clone the Repository
 ```bash
-git clone https://github.com/lavumi/flappy_nn.git
-cd flappy_nn
+git clone https://github.com/lavumi/pixie.git
+cd pixie
 ```
 
 ## Building and Running
@@ -70,7 +70,7 @@ wasm-pack build --target web
 ## Project Structure
 
 ```
-flappy_nn/
+pixie/
 ├── engine/                    # Generic game engine crate
 │   ├── src/
 │   │   ├── application.rs     # Application trait (game logic interface)
