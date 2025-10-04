@@ -138,21 +138,26 @@ impl EngineBuilder {
 ## 마이그레이션 단계 (Migration Steps)
 
 ### Step 1: Workspace 설정
-- [ ] `Cargo.toml`에 workspace 설정 추가
-- [ ] `engine/` 크레이트 생성
-- [ ] `examples/flappy_bird/` 크레이트 생성
+- [x] ~~`Cargo.toml`에 workspace 설정 추가~~
+- [x] ~~`engine/` 크레이트 생성~~
+- [x] ~~`examples/flappy_bird/` 크레이트 생성~~
 
 ### Step 2: 렌더링 엔진 이동
-- [ ] `src/renderer/` → `engine/src/renderer/` 이동
-- [ ] 관련 의존성 업데이트
+- [x] ~~`src/renderer/` → `engine/src/renderer/` 이동~~
+- [x] ~~관련 의존성 업데이트~~
+- [x] ~~`engine/src/config.rs` 생성 (SCREEN_SIZE)~~
+- [x] ~~Dispatcher 인프라 이동 (`engine/src/dispatcher/`)~~
+- [x] ~~에셋 분리 (shader/font → engine, img → game)~~
+- [x] ~~동적 폰트 렌더링 시스템 포팅 (rgba_font 브랜치)~~
 
 ### Step 3: 범용 컴포넌트 분리
-- [ ] `Transform`, `Collider`, `Tile` → `engine/src/components/`
-- [ ] `Player`, `Pipe`, `DNA` → `examples/flappy_bird/src/components/`
+- [x] ~~`Transform`, `Collider`, `Tile`, `Text`, `Animation` → `engine/src/components/`~~
+- [x] ~~`Player`, `Pipe`, `DNA` → `examples/flappy_bird/src/components/`~~
 
 ### Step 4: 범용 시스템 분리
-- [ ] 물리, 충돌, 렌더링 시스템 → `engine/src/systems/`
-- [ ] Flappy Bird 전용 시스템 → `examples/flappy_bird/src/systems/`
+- [x] ~~물리, 충돌, 렌더링 시스템 → `engine/src/systems/`~~
+- [x] ~~Flappy Bird 전용 시스템 → `examples/flappy_bird/src/systems/`~~
+- [x] ~~범용 리소스 이동 (`Camera`, `DeltaTime`, `InputHandler`)~~
 
 ### Step 5: Scene 시스템 도입
 - [ ] `Scene` 트레이트 정의

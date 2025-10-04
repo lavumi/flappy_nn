@@ -1,18 +1,17 @@
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 
-use crate::application::Application;
 use crate::winit_state::WinitState;
+use crate::flappy_app::FlappyApplication;
 
 // Re-export renderer from engine
 pub use engine::renderer;
 
 pub mod winit_state;
-pub mod application;
+pub mod flappy_app;
 mod components;
 mod resources;
 mod system;
-mod game_state;
 mod builder;
 mod game_configs;
 
@@ -35,8 +34,15 @@ pub async fn start(){
     }
 
     let (wb, event_loop) = WinitState::create(title, width, height );
-    // let asset_path = concat!(env!("CARGO_MANIFEST_DIR"), "/assets/").to_string();
-    let mut application = Application::new(wb, &event_loop).await;
-    event_loop.run_app(&mut application).unwrap();
+
+    let app = FlappyApplication::default();
+    let mut engine = engine::Engine::new(app, wb, &event_loop).await;
+
+    // Load game-specific textures
+    engine.get_render_state_mut().load_texture_atlas("tile", include_bytes!("../assets/img/tile.png"));
+    engine.get_render_state_mut().load_texture_atlas("bg", include_bytes!("../assets/img/bg.png"));
+    engine.get_render_state_mut().load_texture_atlas("player", include_bytes!("../assets/img/player.png"));
+
+    event_loop.run_app(&mut engine).unwrap();
 }
 
