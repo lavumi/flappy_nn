@@ -1,20 +1,34 @@
-use std::cmp::max;
+use std::cmp::{max, min};
 use std::collections::HashMap;
-use crate::renderer::mesh::{InstanceColorTileRaw};
+use fontdue::Metrics;
+use crate::renderer::mesh::InstanceColorTileRaw;
 use crate::renderer::TextRenderData;
-
 
 const RENDER_CHARACTER_ARRAY: [char; 64] = [
     'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':' , '.',
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':', '.',
 ];
 
-
-pub struct FontManager {
-    pub font_map: HashMap<char, [f32; 4]>,
+struct Glyph {
+    bitmap: Vec<u8>,
+    metrics: Metrics,
 }
 
+pub struct RasterizedFont {
+    glyphs: Vec<Glyph>,
+    size: [usize; 2],
+    max_y_min: i32,
+}
+
+struct FontRenderData {
+    uv: [f32; 4],
+    width: f32,
+}
+
+pub struct FontManager {
+    pub font_map: HashMap<char, FontRenderData>,
+}
 
 impl Default for FontManager {
     fn default() -> Self {
@@ -24,51 +38,75 @@ impl Default for FontManager {
     }
 }
 
-
 impl FontManager {
-    #[allow(unused)]
-    pub async fn make_font_atlas(device: &wgpu::Device, queue: &wgpu::Queue) -> Result<wgpu::Texture, wgpu::SurfaceError> {
-        let font = include_bytes!("../../assets/font/firamono.otf") as &[u8];
+    pub fn font_rasterize(&mut self, font_size: f32) -> RasterizedFont {
+        let font = include_bytes!("../../assets/font/Gameplay.ttf") as &[u8];
         let font = fontdue::Font::from_bytes(font, fontdue::FontSettings::default()).unwrap();
 
-        let mut max_size = [0, 0];
-        let mut font_data = vec![];
-        for character in RENDER_CHARACTER_ARRAY {
-            let (metrics, bitmap) = font.rasterize(character, 32.0);
-            // log::info!( "{} : {} : {:?}",character,bitmap.len(), metrics);
-            font_data.push((metrics, bitmap));
+        let mut size = [0, 0];
+        let mut max_y_min = 0;
+        let mut glyphs = vec![];
 
-            max_size[0] = max(max_size[0], metrics.width);
-            max_size[1] = max(max_size[1], metrics.height);
-
-
+        for (_, character) in RENDER_CHARACTER_ARRAY.iter().enumerate() {
+            let (metrics, bitmap) = font.rasterize_subpixel(*character, font_size);
+            glyphs.push(Glyph { bitmap, metrics });
+            size[0] = max(size[0], metrics.width);
+            size[1] = max(size[1], metrics.height);
+            max_y_min = min(max_y_min, metrics.ymin);
         }
 
-        log::info!("{:?}", max_size);
+        let char_in_row = 256 / size[0];
 
+        for (index, character) in RENDER_CHARACTER_ARRAY.iter().enumerate() {
+            let uv = [
+                (index % char_in_row) as f32 * size[0] as f32 * 0.00390625,
+                (index % char_in_row + 1) as f32 * size[0] as f32 * 0.00390625,
+                (index / char_in_row) as f32 * size[1] as f32 * 0.00390625,
+                (index / char_in_row + 1) as f32 * size[1] as f32 * 0.00390625,
+            ];
 
-        //region Output Texture to Buffer (for output files )
+            let metrics = glyphs[index].metrics;
 
+            self.font_map.insert(
+                character.clone(),
+                FontRenderData {
+                    uv,
+                    width: metrics.width as f32 / size[0] as f32,
+                },
+            );
+        }
 
-        let u8_size = std::mem::size_of::<u8>() as u32;
-        let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("font rendering command encoder") });
-        let output_buffer_size = (u8_size * 256 * 256) as wgpu::BufferAddress;
-        let output_buffer_desc = wgpu::BufferDescriptor {
-            size: output_buffer_size,
-            usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
-            label: Some("font atlas buffer"),
-            mapped_at_creation: false,
+        return RasterizedFont {
+            glyphs,
+            size,
+            max_y_min,
         };
-        let output_buffer = device.create_buffer(&output_buffer_desc);
+    }
 
-        // let zeros: [u8; 522] = [0; 522];
-        // let middle: [u8; 522] = [128; 522];
-        // let full: [u8; 522] = [255; 522];
+    pub fn make_font_buffer(
+        &mut self,
+        rasterized_font: RasterizedFont,
+        output_buffer: wgpu::Buffer,
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+    ) -> Result<wgpu::Buffer, wgpu::SurfaceError> {
+        let max_size = rasterized_font.size;
+
+        let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+            label: Some("font buffer command encoder"),
+        });
 
         let char_in_row = 256 / max_size[0];
-        for (index, font_datum) in font_data.iter().enumerate() {
-            let metrics = font_datum.0;
-            let bitmap = &font_datum.1;
+        for (index, font_datum) in rasterized_font.glyphs.iter().enumerate() {
+            let metrics = font_datum.metrics;
+            let bitmap = &font_datum.bitmap;
+
+            // Convert RGB to RGBA
+            let rgb_data = &bitmap;
+            let rgba_data: Vec<u8> = rgb_data
+                .chunks(3)
+                .flat_map(|rgb| [rgb[0], rgb[1], rgb[2], 255].into_iter())
+                .collect();
 
             let size = wgpu::Extent3d {
                 width: metrics.width as u32,
@@ -81,8 +119,10 @@ impl FontManager {
                 mip_level_count: 1,
                 sample_count: 1,
                 dimension: wgpu::TextureDimension::D2,
-                format: wgpu::TextureFormat::R8Unorm,
-                usage: wgpu::TextureUsages::COPY_SRC | wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
+                format: wgpu::TextureFormat::Rgba8Unorm,
+                usage: wgpu::TextureUsages::COPY_SRC
+                    | wgpu::TextureUsages::TEXTURE_BINDING
+                    | wgpu::TextureUsages::COPY_DST,
                 view_formats: &[],
             });
 
@@ -93,21 +133,23 @@ impl FontManager {
                     origin: wgpu::Origin3d::ZERO,
                     aspect: wgpu::TextureAspect::All,
                 },
-                &bitmap,
+                &rgba_data,
                 wgpu::TexelCopyBufferLayout {
                     offset: 0,
-                    bytes_per_row: Some(size.width),
+                    bytes_per_row: Some(size.width * 4),
                     rows_per_image: Some(size.height),
                 },
                 size,
             );
 
-            let offset = (
-                index % char_in_row * max_size[0] 
+            let offset = ((index % char_in_row * max_size[0]
                 + index / char_in_row * 256 * max_size[1]
                 + metrics.xmin as usize
-                + 256 * (max_size[1] - (metrics.height as i32 + metrics.ymin + 7) as usize) 
-            ) as wgpu::BufferAddress;
+                + 256
+                    * (max_size[1]
+                        - (metrics.height as i32 + metrics.ymin - rasterized_font.max_y_min)
+                            as usize))
+                * 4) as wgpu::BufferAddress;
 
             encoder.copy_texture_to_buffer(
                 wgpu::TexelCopyTextureInfo {
@@ -120,16 +162,41 @@ impl FontManager {
                     buffer: &output_buffer,
                     layout: wgpu::TexelCopyBufferLayout {
                         offset,
-                        bytes_per_row: Some(256),
+                        bytes_per_row: Some(256 * 4),
                         rows_per_image: Some(256),
                     },
                 },
                 size,
             );
         }
+        queue.submit(Some(encoder.finish()));
+        return Ok(output_buffer);
+    }
 
+    pub async fn make_font_atlas_rgba(
+        &mut self,
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+    ) -> Result<wgpu::Texture, wgpu::SurfaceError> {
+        let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+            label: Some("font atlasing command encoder"),
+        });
+        let rasterized_font = self.font_rasterize(24.0);
 
-        //region [ Make Font Atlas Texture ]
+        let u8_size = std::mem::size_of::<u8>() as u32;
+        let output_buffer_size = (u8_size * 256 * 256 * 4) as wgpu::BufferAddress;
+        let output_buffer_desc = wgpu::BufferDescriptor {
+            size: output_buffer_size,
+            usage: wgpu::BufferUsages::COPY_SRC | wgpu::BufferUsages::COPY_DST,
+            label: Some("font atlas buffer"),
+            mapped_at_creation: false,
+        };
+        let output_buffer = device.create_buffer(&output_buffer_desc);
+        let output_buffer = self
+            .make_font_buffer(rasterized_font, output_buffer, device, queue)
+            .unwrap();
+
+        // Make Font Atlas Texture
         let size = wgpu::Extent3d {
             width: 256,
             height: 256,
@@ -141,82 +208,44 @@ impl FontManager {
             mip_level_count: 1,
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::R8Unorm,
-            usage: wgpu::TextureUsages::COPY_SRC | wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST | wgpu::TextureUsages::RENDER_ATTACHMENT,
+            format: wgpu::TextureFormat::Rgba8Unorm,
+            usage: wgpu::TextureUsages::COPY_SRC
+                | wgpu::TextureUsages::TEXTURE_BINDING
+                | wgpu::TextureUsages::COPY_DST
+                | wgpu::TextureUsages::RENDER_ATTACHMENT,
             view_formats: &[],
         });
 
-
-        // //결국 이걸 바꿔야하네
-        // //버퍼를 텍스쳐에 밀어넣지 말고 직접 그려줘야지...
-        // encoder.copy_buffer_to_texture(
-        //     wgpu::ImageCopyBuffer {
-        //         buffer: &output_buffer,
-        //         layout: wgpu::ImageDataLayout {
-        //             offset :0,
-        //             bytes_per_row: Some(256),
-        //             rows_per_image: None,
-        //         },
-        //     },
-        //     wgpu::ImageCopyTexture {
-        //         texture: &texture,
-        //         mip_level: 0,
-        //         origin: wgpu::Origin3d::ZERO,
-        //         aspect: Default::default(),
-        //     },
-        //     size);
-        // output_buffer.unmap();
+        encoder.copy_buffer_to_texture(
+            wgpu::TexelCopyBufferInfo {
+                buffer: &output_buffer,
+                layout: wgpu::TexelCopyBufferLayout {
+                    offset: 0,
+                    bytes_per_row: Some(256 * 4),
+                    rows_per_image: None,
+                },
+            },
+            wgpu::TexelCopyTextureInfo {
+                texture: &texture,
+                mip_level: 0,
+                origin: wgpu::Origin3d::ZERO,
+                aspect: Default::default(),
+            },
+            size,
+        );
         queue.submit(Some(encoder.finish()));
-        //endregion
-
-        //region [ Save Font Atlas to png for test ]
-        // We need to scope the mapping variables so that we can
-        {
-            let buffer_slice = output_buffer.slice(..);
-
-            // NOTE: We have to create the mapping THEN device.poll() before await
-            // the future. Otherwise the application will freeze.
-            let (tx, rx) = futures_intrusive::channel::shared::oneshot_channel();
-            buffer_slice.map_async(wgpu::MapMode::Read, move |result| {
-                tx.send(result).unwrap();
-            });
-            // device.poll is deprecated in wgpu 27.0, the device polls automatically
-            rx.receive().await.unwrap().unwrap();
-
-            let data = buffer_slice.get_mapped_range();
-
-            use image::{ImageBuffer, Luma};
-            let buffer = ImageBuffer::<Luma<u8>, _>::from_raw(256, 256, data).unwrap();
-            buffer.save("image2.png").unwrap();
-        }
-        output_buffer.unmap();
-        //endregion
 
         Ok(texture)
     }
 
-
     pub fn init(&mut self) {
-        // let font = include_bytes!("../../assets/font/plp.otf") as &[u8];
-        // let font = fontdue::Font::from_bytes(font, fontdue::FontSettings::default()).unwrap();
-
-        let char_in_row = 12;
-        for (index, character) in RENDER_CHARACTER_ARRAY.iter().enumerate() {
-            let uv = [
-                (index % char_in_row) as f32 * 20. * 0.00390625,
-                (index % char_in_row + 1) as f32 * 20. * 0.00390625 ,
-                (index / char_in_row) as f32 * 32. * 0.00390625,
-                (index / char_in_row + 1) as f32 * 32. * 0.00390625 ,
-            ];
-
-            self.font_map.insert(character.clone(), uv);
-        }
+        // This method is now a no-op as we use make_font_atlas_rgba instead
     }
 
-    pub fn get_uv(&self, char_key: char) -> &[f32; 4] {
+    pub fn get_render_data(&self, char_key: char) -> &FontRenderData {
         match self.font_map.get(&char_key) {
             Some(value) => value,
-            None => panic!("try to use unloaded font {}" , char_key)
+            None => panic!("try to use unloaded font {}", char_key),
         }
     }
 
@@ -224,8 +253,12 @@ impl FontManager {
         let line_space = 0.1;
         let aspect_ratio = 0.625;
         let mut result = Vec::new();
-        let mut position = cgmath::Vector3 { x: text.position[0], y: text.position[1], z: text.position[2] };
-        let scale_matrix = cgmath::Matrix4::from_nonuniform_scale(text.size[0] * aspect_ratio , text.size[1], 1.0);
+        let mut position = cgmath::Vector3 {
+            x: text.position[0],
+            y: text.position[1],
+            z: text.position[2],
+        };
+        let scale_matrix = cgmath::Matrix4::from_nonuniform_scale(text.size[0] * aspect_ratio, text.size[1], 1.0);
 
         for txt in text.content.chars() {
             if txt == ' ' {
@@ -238,7 +271,8 @@ impl FontManager {
                 continue;
             }
 
-            let uv = self.get_uv(txt).clone();
+            let render_data = self.get_render_data(txt);
+            let uv = render_data.uv;
             let translation_matrix = cgmath::Matrix4::from_translation(position);
             let color = text.color;
 
@@ -246,7 +280,7 @@ impl FontManager {
             result.push(InstanceColorTileRaw {
                 uv,
                 model,
-                color ,
+                color,
             });
             position.x += text.size[0] * aspect_ratio;
         }

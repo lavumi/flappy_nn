@@ -10,6 +10,21 @@ pub struct Texture {
 
 impl Texture {
     pub const DEPTH_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth32Float;
+
+    pub fn from_wgpu_texture(texture: wgpu::Texture, device: &wgpu::Device) -> Self {
+        let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
+        let sampler = device.create_sampler(&wgpu::SamplerDescriptor {
+            address_mode_u: wgpu::AddressMode::ClampToEdge,
+            address_mode_v: wgpu::AddressMode::ClampToEdge,
+            address_mode_w: wgpu::AddressMode::ClampToEdge,
+            mag_filter: wgpu::FilterMode::Linear,
+            min_filter: wgpu::FilterMode::Linear,
+            mipmap_filter: wgpu::FilterMode::Nearest,
+            ..Default::default()
+        });
+        Self { texture, view, sampler }
+    }
+
     pub fn create_depth_texture(device: &wgpu::Device, config: &wgpu::SurfaceConfiguration, label: &str) -> Self {
         let size = wgpu::Extent3d { // 2.
             width: config.width,
@@ -48,28 +63,6 @@ impl Texture {
         Self { texture, view, sampler }
     }
 
-    #[allow(unused)]
-    pub fn from_wgpu_texture(
-        device: &wgpu::Device,
-        texture: wgpu::Texture,
-    ) -> Result<Self> {
-        let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
-        let sampler = device.create_sampler(&wgpu::SamplerDescriptor {
-            address_mode_u: wgpu::AddressMode::ClampToEdge,
-            address_mode_v: wgpu::AddressMode::ClampToEdge,
-            address_mode_w: wgpu::AddressMode::ClampToEdge,
-            mag_filter: wgpu::FilterMode::Nearest,
-            min_filter: wgpu::FilterMode::Nearest,
-            mipmap_filter: wgpu::FilterMode::Linear,
-            ..Default::default()
-        });
-
-        Ok(Self {
-            texture,
-            view,
-            sampler,
-        })
-    }
 
     #[allow(unused)]
     pub fn from_src(
@@ -137,7 +130,7 @@ impl Texture {
         );
 
 
-        Self::from_wgpu_texture(device, texture)
+        Ok(Self::from_wgpu_texture(texture, device))
         // let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
         // let sampler = device.create_sampler(&wgpu::SamplerDescriptor {
         //     address_mode_u: wgpu::AddressMode::ClampToEdge,

@@ -126,9 +126,10 @@ impl RenderState {
 
     pub async fn init_resources(&mut self) {
         // Initialize UI resources (font system)
-        self.gpu_resource_manager.init_ui_atlas(&self.device, &self.queue);
+        // Generate font atlas from TTF at runtime
+        let font_texture = self.font_manager.make_font_atlas_rgba(&self.device, &self.queue).await.unwrap();
+        self.gpu_resource_manager.init_ui_atlas_from_texture(font_texture, &self.device).await;
         self.gpu_resource_manager.init_ui_meshes(&self.device);
-        self.font_manager.init();
     }
 
     /// Load a texture atlas and auto-create a quad mesh for rendering

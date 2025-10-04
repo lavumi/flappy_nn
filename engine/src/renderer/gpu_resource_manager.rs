@@ -318,8 +318,8 @@ impl GPUResourceManager {
 
 
 
-    pub fn init_ui_atlas(&mut self, device: &Device, queue: &Queue) {
-        let diffuse_texture = Texture::from_bytes(device, queue, include_bytes!("../../../assets/img/font.png"), "font").unwrap();
+    pub async fn init_ui_atlas_from_texture(&mut self, texture: wgpu::Texture, device: &Device) {
+        let diffuse_texture = Texture::from_wgpu_texture(texture, device);
         self.make_bind_group("font", diffuse_texture, device);
     }
 
