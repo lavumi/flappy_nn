@@ -124,9 +124,14 @@ impl Application {
 
         let mut gs = GameState::default();
         gs.init();
-        
+
         let mut rs = RenderState::new(window.clone()).await;
         rs.init_resources().await;
+
+        // Load game-specific textures
+        rs.load_texture_atlas("tile", include_bytes!("../assets/img/tile.png"));
+        rs.load_texture_atlas("bg", include_bytes!("../assets/img/bg.png"));
+        rs.load_texture_atlas("player", include_bytes!("../assets/img/player.png"));
 
         Self {
             gs,

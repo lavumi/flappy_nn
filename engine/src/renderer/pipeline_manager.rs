@@ -124,7 +124,7 @@ impl PipelineManager {
         default_format: TextureFormat,
         gpu_resource_manager: &GPUResourceManager,
     ) {
-        let shader = device.create_shader_module(wgpu::include_wgsl!("../../../assets/shader/texture.wgsl"));
+        let shader = device.create_shader_module(wgpu::include_wgsl!("../../assets/shader/texture.wgsl"));
         let render_pipeline = PipelineDesc{
             primitive_topology: wgpu::PrimitiveTopology::TriangleList,
             depth_stencil: Some(wgpu::DepthStencilState {
@@ -148,7 +148,7 @@ impl PipelineManager {
 
 
 
-        let shader = device.create_shader_module(wgpu::include_wgsl!("../../../assets/shader/font.wgsl"));
+        let shader = device.create_shader_module(wgpu::include_wgsl!("../../assets/shader/font.wgsl"));
         let render_pipeline = PipelineDesc{
             primitive_topology: wgpu::PrimitiveTopology::TriangleList,
             depth_stencil: Some(wgpu::DepthStencilState {

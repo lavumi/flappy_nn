@@ -28,7 +28,7 @@ impl Default for FontManager {
 impl FontManager {
     #[allow(unused)]
     pub async fn make_font_atlas(device: &wgpu::Device, queue: &wgpu::Queue) -> Result<wgpu::Texture, wgpu::SurfaceError> {
-        let font = include_bytes!("../../../assets/font/firamono.otf") as &[u8];
+        let font = include_bytes!("../../assets/font/firamono.otf") as &[u8];
         let font = fontdue::Font::from_bytes(font, fontdue::FontSettings::default()).unwrap();
 
         let mut max_size = [0, 0];

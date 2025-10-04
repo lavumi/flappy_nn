@@ -125,15 +125,15 @@ impl RenderState {
     }
 
     pub async fn init_resources(&mut self) {
-        self.gpu_resource_manager.init_atlas(&self.device, &self.queue);
-        self.gpu_resource_manager.init_meshes(&self.device);
-
-
+        // Initialize UI resources (font system)
         self.gpu_resource_manager.init_ui_atlas(&self.device, &self.queue);
         self.gpu_resource_manager.init_ui_meshes(&self.device);
-
-        // FontManager::make_font_atlas(&self.device, &self.queue).await.expect("make font atlas fail");
         self.font_manager.init();
+    }
+
+    /// Load a texture atlas and auto-create a quad mesh for rendering
+    pub fn load_texture_atlas(&mut self, name: &str, image_bytes: &[u8]) {
+        self.gpu_resource_manager.load_texture_atlas(name, image_bytes, &self.device, &self.queue);
     }
 
     #[allow(dead_code)]

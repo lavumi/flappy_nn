@@ -37,19 +37,15 @@ impl GPUResourceManager {
 
     }
 
-    pub fn init_atlas(&mut self, device: &Device, queue: &Queue) {
-        let diffuse_texture = Texture::from_bytes(device, queue, include_bytes!("../../../assets/img/tile.png"), "tile").unwrap();
-        self.make_bind_group("tile", diffuse_texture, device);
-        let diffuse_texture = Texture::from_bytes(device, queue, include_bytes!("../../../assets/img/bg.png"), "bg").unwrap();
-        self.make_bind_group("bg", diffuse_texture, device);
-        let diffuse_texture = Texture::from_bytes(device, queue, include_bytes!("../../../assets/img/player.png"), "player").unwrap();
-        self.make_bind_group("player", diffuse_texture, device);
-    }
+    /// Load a texture atlas and automatically create a default quad mesh for it
+    pub fn load_texture_atlas(&mut self, name: &str, image_bytes: &[u8], device: &Device, queue: &Queue) {
+        // Load texture
+        let texture = Texture::from_bytes(device, queue, image_bytes, name).unwrap();
+        self.make_bind_group(name, texture, device);
 
-    pub fn init_meshes(&mut self, device: &Device) {
-        self.add_mesh("tile", make_tile_mesh(device, "tile".to_string()));
-        self.add_mesh("bg", make_tile_mesh(device, "bg".to_string()));
-        self.add_mesh("player", make_tile_mesh(device, "player".to_string()));
+        // Auto-create mesh
+        let mesh = make_tile_mesh(device, name.to_string());
+        self.add_mesh(name, mesh);
     }
 
     fn init_base_layouts(&mut self, device: &Device) {
@@ -207,10 +203,10 @@ impl GPUResourceManager {
     }
 
 
-    fn add_mesh<T: Into<String>>(&mut self, name: T, mesh: Mesh) {
+    pub fn add_mesh<T: Into<String>>(&mut self, name: T, mesh: Mesh) {
         let name = name.into();
         if self.meshes_by_atlas.contains_key(&name) {
-            panic!("Buffer already exists use `get_buffer` or use a different key.");
+            panic!("Mesh already exists for atlas: {}", name);
         }
         self.meshes_by_atlas.insert(name, mesh);
     }
