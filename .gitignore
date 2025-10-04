@@ -15,3 +15,7 @@ Cargo.lock
 *.pdb
 
 /.idea/
+
+
+
+.claude/
